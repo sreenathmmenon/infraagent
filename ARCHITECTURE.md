@@ -1,33 +1,251 @@
 # InfraAgent Architecture
 
-## System Overview
+## 🏗️ High-Level System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Frontend (React)                          │
-│  Dashboard | Alerts | Approvals | Activities | Runbooks         │
-└────────────────────────┬────────────────────────────────────────┘
-                         │ WebSocket + REST API
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Backend (FastAPI)                             │
-│                    Orchestrator Layer                            │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-        ┌────────────────┼────────────────┐
-        ▼                ▼                ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│ Alert Agent  │  │ Config Agent │  │ Action Agent │
-│              │  │   🤖 AI      │  │              │
-└──────────────┘  └──────────────┘  └──────────────┘
-        │                │                │
-        └────────────────┴────────────────┘
-                         │
-                         ▼
-              ┌──────────────────────┐
-              │  Infrastructure      │
-              │  (Mock Data Layer)   │
-              └──────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                             USER INTERFACE                                  │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                       React Frontend (Port 5173)                      │  │
+│  │                                                                       │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │  │
+│  │  │Dashboard │  │  Alerts  │  │Approvals │  │Activities│           │  │
+│  │  │          │  │          │  │          │  │          │           │  │
+│  │  │ Health   │  │ Simulate │  │ Review & │  │ History  │           │  │
+│  │  │ Monitor  │  │ Scenarios│  │ Approve  │  │ Rollback │           │  │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘           │  │
+│  │                                                                       │  │
+│  └───────────────────────────┬───────────────────────────────────────────┘  │
+└────────────────────────────────┼────────────────────────────────────────────┘
+                                 │
+                    WebSocket + REST API (Real-time Updates)
+                                 │
+┌────────────────────────────────┼────────────────────────────────────────────┐
+│                                ▼                                            │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │              FastAPI Backend (Port 8000)                             │   │
+│  │                     Orchestrator Layer                               │   │
+│  │                                                                      │   │
+│  │  • Workflow State Machine (8 states)                               │   │
+│  │  • Event Sourcing Pattern                                          │   │
+│  │  • WebSocket Manager                                               │   │
+│  │  • REST API Endpoints (20+)                                        │   │
+│  └─────────────────┬────────────────────────────────┬──────────────────┘   │
+│                    │                                │                      │
+│         ┌──────────┴──────────┐          ┌─────────┴──────────┐          │
+│         │                     │          │                    │          │
+│    ┌────▼─────┐      ┌───────▼──────┐   ▼                    │          │
+│    │          │      │              │                         │          │
+│  ┌─┴──────────┴──┐ ┌─┴──────────────┴─┐  ┌──────────────────┴───┐      │
+│  │ Alert Agent   │ │ Config Agent     │  │ Action Agent          │      │
+│  │               │ │                  │  │                       │      │
+│  │ • Detects     │ │ • 🤖 AI-Powered │  │ • Executes approved  │      │
+│  │   issues      │ │ • Analyzes alert│  │   actions             │      │
+│  │ • Routes to   │ │ • Suggests fix  │  │ • Live tracking      │      │
+│  │   agents      │ │ • Confidence:   │  │ • Rollback snapshots │      │
+│  │               │ │   85-92%        │  │                       │      │
+│  │               │ │ • Risk scoring  │  │                       │      │
+│  └───────────────┘ └──────────────────┘  └───────────────────────┘      │
+│                                                                            │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │              Additional Services                                    │   │
+│  │                                                                     │   │
+│  │  ┌──────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │   │
+│  │  │ Activity Service │  │  Health Service │  │ AI Post-Mortem  │  │   │
+│  │  │                  │  │                 │  │   Generator     │  │   │
+│  │  │ • History        │  │ • 14 services   │  │  🤖 Claude API  │  │   │
+│  │  │ • Rollback mgmt  │  │ • 6 tiers       │  │ • Timeline      │  │   │
+│  │  │ • 6 runbooks     │  │ • Metrics       │  │ • Root cause    │  │   │
+│  │  └──────────────────┘  └─────────────────┘  └─────────────────┘  │   │
+│  └────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────┬───────────────────────────────────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+                    ▼                         ▼
+        ┌────────────────────┐    ┌────────────────────┐
+        │  Mock Infrastructure│    │  Future: Real Infra│
+        │                    │    │                    │
+        │  • Alerts JSON     │    │  • SSH connections │
+        │  • Services JSON   │    │  • Cloud APIs      │
+        │  • Runbooks JSON   │    │  • Monitoring APIs │
+        │  • Activities JSON │    │  • Prometheus, etc │
+        └────────────────────┘    └────────────────────┘
+```
+
+---
+
+## 🔄 Complete Workflow Diagram
+
+```
+                            ┌─────────────────────────┐
+                            │    1. Alert Fires       │
+                            │   (CPU spike, etc.)     │
+                            └───────────┬─────────────┘
+                                        │
+                                        ▼
+                            ┌─────────────────────────┐
+                            │   2. Alert Agent        │
+                            │   Detects & Routes      │
+                            └───────────┬─────────────┘
+                                        │
+                                        ▼
+                    ┌───────────────────────────────────────┐
+                    │   3. Config Agent (🤖 AI-Powered)    │
+                    │                                       │
+                    │   • Analyzes alert context           │
+                    │   • Reviews topology                 │
+                    │   • Generates suggestion             │
+                    │   • Confidence: 87%                  │
+                    │   • Risk: Low/Medium/High            │
+                    │   • Impact assessment                │
+                    └───────────────┬───────────────────────┘
+                                    │
+                                    ▼
+        ┌──────────────────────────────────────────────────────┐
+        │   4. WebSocket Broadcast: "Awaiting Approval"        │
+        │      Real-time UI update                             │
+        └───────────────┬──────────────────────────────────────┘
+                        │
+                        ▼
+        ┌───────────────────────────────────────────┐
+        │   5. Human-in-the-Loop Decision           │
+        │                                           │
+        │   Operator sees:                          │
+        │   ✓ AI Recommendation                     │
+        │   ✓ Confidence Score                      │
+        │   ✓ Risk Level                            │
+        │   ✓ Estimated Impact                      │
+        │   ✓ Rollback Plan                         │
+        │                                           │
+        │   [Approve] 👍  or  [Reject] 👎          │
+        └─────┬─────────────────────────────┬───────┘
+              │                             │
+    ┌─────────▼──────┐              ┌──────▼────────┐
+    │   APPROVED     │              │   REJECTED    │
+    └─────┬──────────┘              └───────────────┘
+          │                                 │
+          ▼                                 ▼
+┌──────────────────────┐            Workflow ends
+│  6. Action Agent     │            with reason
+│     Execution        │
+│                      │
+│  • Step 1: Backup   │
+│  • Step 2: Execute  │
+│  • Step 3: Verify   │
+│                      │
+│  Live progress ▶▶▶  │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────────────────────────┐
+│   7. Completed + 5-Minute Rollback       │
+│                                          │
+│   Activity logged in history             │
+│   Rollback timer: ⏱️ 4:58... 4:57...    │
+│                                          │
+│   [Rollback] button available            │
+└────────────┬─────────────────────────────┘
+             │
+             ├──── Within 5 min ────┐
+             │                      │
+             │                      ▼
+             │            ┌─────────────────────┐
+             │            │  8. Rollback Exec   │
+             │            │     (Optional)      │
+             │            │                     │
+             │            │  • Restore backup   │
+             │            │  • Verify restored  │
+             │            │  • Status: Rolled   │
+             │            │    Back             │
+             │            └─────────────────────┘
+             │
+             └──── After 5 min ────▶ Permanent (No rollback)
+```
+
+---
+
+## 🤖 AI Integration Points Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    AI INTEGRATION POINTS                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  ✅ IMPLEMENTED - Alert Remediation                                 │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│    Alert Data         Config Agent (AI)        Human Decision       │
+│    ┌────────┐        ┌──────────────┐        ┌──────────────┐     │
+│    │CPU:95% │───────▶│ Analyze      │───────▶│ [Approve]    │     │
+│    │Mem:72% │        │ Suggest Fix  │        │ [Reject]     │     │
+│    │Load:8.3│        │ Score: 87%   │        └──────────────┘     │
+│    └────────┘        │ Risk: Low    │                              │
+│                      └──────────────┘                              │
+│                                                                      │
+│    Input: Alert metrics, topology, history                          │
+│    Output: Remediation suggestion, confidence, risk                 │
+│    Model: Rule-based + AI hybrid                                    │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  ✅ IMPLEMENTED - Post-Mortem Generation                            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│    Completed         AI Post-Mortem            Human Review         │
+│    Activity          Generator                                      │
+│    ┌────────┐       ┌──────────────┐         ┌──────────────┐     │
+│    │Alert   │──────▶│ Claude API   │────────▶│ Read Report  │     │
+│    │Actions │       │              │         │ Act on Items │     │
+│    │Results │       │ Generates:   │         └──────────────┘     │
+│    │Timeline│       │ • Summary    │                              │
+│    └────────┘       │ • Timeline   │                              │
+│                     │ • Root Cause │                              │
+│                     │ • Impact     │                              │
+│                     │ • Lessons    │                              │
+│                     └──────────────┘                              │
+│                                                                      │
+│    Input: Activity data (alert, actions, results, metrics)          │
+│    Output: Comprehensive incident report                            │
+│    Model: Claude 3.5 Sonnet (optional, has mock fallback)           │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  🔮 FUTURE - Log Analysis                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│    Log Stream       AI Analyzer              Proactive Alerts       │
+│    ┌────────┐     ┌──────────────┐         ┌──────────────┐       │
+│    │App logs│────▶│ Pattern      │────────▶│ Predict      │       │
+│    │Sys logs│     │ Recognition  │         │ Issues       │       │
+│    │Metrics │     │ Anomaly Det. │         │ Early        │       │
+│    └────────┘     │ Clustering   │         └──────────────┘       │
+│                   └──────────────┘                                 │
+│                                                                      │
+│    Model: Vector embeddings + semantic search                       │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  🔮 FUTURE - Runbook Generation                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│    Historical        AI Generator            Human Validation       │
+│    Data                                                             │
+│    ┌────────┐      ┌──────────────┐        ┌──────────────┐       │
+│    │Past    │─────▶│ Learn from   │───────▶│ Review       │       │
+│    │Fixes   │      │ Success      │        │ Test         │       │
+│    │Feedback│      │ Generate     │        │ Approve      │       │
+│    └────────┘      │ Runbooks     │        └──────────────┘       │
+│                    └──────────────┘                                │
+│                                                                      │
+│    Model: Fine-tuned LLM on operational data                        │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---

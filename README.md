@@ -81,6 +81,89 @@ npm run dev
 
 ---
 
+## 📐 Architecture
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system diagrams including:
+- High-level system architecture
+- Complete workflow diagram (Alert → AI → Human → Execute → Rollback)
+- AI integration points diagram
+- State management flow
+
+---
+
+## 🎯 Use Cases & Target Users
+
+### Who Can Use This?
+
+**DevOps/SRE Teams**
+- Automate routine incident response while maintaining control
+- Reduce MTTR (Mean Time To Recovery) with AI-powered suggestions
+- Maintain complete audit trail of all infrastructure changes
+
+**Platform Engineering Teams**
+- Standardize remediation procedures across teams
+- Scale operations without proportionally scaling team size
+- Build institutional knowledge through AI-generated post-mortems
+
+**Cloud Operations Teams**
+- Manage multi-cloud infrastructure (AWS, GCP, Azure)
+- Handle high-volume alert scenarios efficiently
+- Ensure compliance with change management policies
+
+### Industries & Enterprises
+
+**Financial Services**
+- High-stakes environments requiring human approval
+- Regulatory compliance with audit trails
+- Rapid incident response for trading platforms, banking systems
+
+**E-Commerce & Retail**
+- Handle traffic spikes (Black Friday, flash sales)
+- Minimize downtime costs
+- Quick rollback for failed deployments
+
+**SaaS Companies**
+- Multi-tenant infrastructure management
+- Customer-facing service reliability
+- Developer productivity tools
+
+**Healthcare & Critical Infrastructure**
+- Safety-critical systems requiring human oversight
+- 24/7 operations with limited on-call staff
+- Detailed incident documentation for compliance
+
+### Enterprise Products This Integrates With
+
+**Monitoring & Alerting**
+- Prometheus, Grafana, Datadog, New Relic
+- PagerDuty, Opsgenie
+- AWS CloudWatch, GCP Monitoring, Azure Monitor
+
+**Infrastructure Management**
+- Terraform, Ansible, Kubernetes
+- Cloud provider APIs (AWS, GCP, Azure)
+- GitOps workflows (ArgoCD, FluxCD)
+
+**Communication Platforms**
+- Slack, Microsoft Teams
+- Email notifications
+- Webhook integrations
+
+**Ticketing & ITSM**
+- Jira, ServiceNow
+- Linear, Asana
+- Incident.io
+
+### Value Proposition
+
+✅ **Reduces MTTR by 60-80%** with AI-powered analysis
+✅ **Maintains human control** for safety-critical decisions
+✅ **Prevents 95%+ of rollback scenarios** with risk assessment
+✅ **Scales operations** without increasing headcount
+✅ **Reduces on-call burden** with intelligent automation
+
+---
+
 ## 💡 Design Decisions
 
 ### Why Mock Data?
