@@ -48,6 +48,34 @@ InfraAgent is an intelligent DevOps copilot that automates infrastructure issue 
 
 ---
 
+## 💡 Why Human-in-the-Loop Matters in AI-Powered Infrastructure
+
+**AI can suggest. Only humans should decide.**
+
+In production infrastructure, a single wrong command can cost millions. That's why InfraAgent puts **humans at the center of every decision**:
+
+### The Problem with Fully Autonomous AI
+- ❌ **Black box decisions** - No visibility into why AI chose an action
+- ❌ **Cascading failures** - One AI mistake can trigger chain reactions
+- ❌ **Zero accountability** - Who's responsible when AI breaks production?
+- ❌ **Compliance nightmares** - Regulators require human oversight for critical systems
+
+### The InfraAgent Approach: AI + Human Intelligence
+- ✅ **AI analyzes** → Processes logs, metrics, and patterns in seconds
+- ✅ **Human decides** → Reviews AI recommendation with confidence scores
+- ✅ **AI executes** → Carries out approved actions flawlessly
+- ✅ **Human monitors** → Can rollback within 5-minute window
+
+### Real-World Impact
+- **Financial Services**: SOX compliance requires human approval for infrastructure changes
+- **Healthcare**: HIPAA mandates oversight for systems handling patient data
+- **E-Commerce**: Black Friday traffic - trust AI suggestions, but verify before scaling
+- **SaaS Platforms**: Customer-facing services need human judgment for trade-offs
+
+**Bottom line**: AI should augment human expertise, not replace it. InfraAgent ensures speed *and* safety.
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
