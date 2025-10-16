@@ -1,8 +1,8 @@
 # InfraAgent - DevOps Copilot with Human-in-the-Loop
 
-**Hackathon Project**: Human-in-the-Loop System with State Management and Rollback
-
 InfraAgent is an intelligent DevOps copilot that automates infrastructure issue resolution while keeping humans in control. It detects alerts, suggests remediation actions, waits for operator approval, executes fixes, and provides time-bound rollback capabilities.
+
+**Key Theme**: Human-in-the-Loop System with State Management and Rollback
 
 ---
 
@@ -77,61 +77,32 @@ npm run dev
 - **Backend API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
 
----
-
-## 📦 Deployment
-
-### Frontend (Vercel)
-
-1. **Deploy to Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Click "Import Project"
-   - Select your GitHub repository
-   - Framework: **Vite**
-   - Root Directory: \`frontend\`
-   - Build Command: \`npm run build\`
-   - Output Directory: \`dist\`
-   - Add Environment Variable:
-     - \`VITE_API_URL\`: Your backend URL (from Railway/Render)
-
-### Backend (Railway / Render)
-
-#### Option 1: Railway
-
-1. Go to [railway.app](https://railway.app)
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your repository
-4. Root Directory: \`backend\`
-5. Deploy - Railway auto-detects the Procfile
-
-#### Option 2: Render
-
-1. Go to [render.com](https://render.com)
-2. Click "New +" → "Web Service"
-3. Connect your GitHub repository
-4. Settings:
-   - **Name**: infraagent-backend
-   - **Root Directory**: \`backend\`
-   - **Build Command**: \`pip install -r requirements.txt\`
-   - **Start Command**: \`uvicorn main:app --host 0.0.0.0 --port \$PORT\`
-   - **Instance Type**: Free
+**Note**: No API keys or environment variables needed - works out of the box with mock data!
 
 ---
 
-## 🔑 Environment Variables
+## 💡 Design Decisions
 
-### Backend
-- \`PORT\`: Server port (default: 8000)
-- No AI API keys needed - uses mock data
+### Why Mock Data?
 
-### Frontend
-- \`VITE_API_URL\`: Backend API URL (e.g., https://your-backend.railway.app)
+This project uses **mock infrastructure data** instead of real VM connections for several reasons:
+
+1. **Portability**: Anyone can run and test the system immediately without infrastructure setup
+2. **Cost**: No need for cloud VMs or services during development/evaluation
+3. **Safety**: Demonstrates the system without risk of affecting real infrastructure
+4. **Focus**: Showcases the core workflow (Human-in-the-Loop, State Management, Rollback) without infrastructure complexity
+
+**Production-Ready Architecture**: The multi-agent system is designed to connect to real infrastructure via:
+- SSH for server commands
+- Cloud provider APIs (AWS, GCP, Azure)
+- Monitoring systems (Prometheus, Datadog, etc.)
+- Simply swap mock data with real API calls in the agent layer
 
 ---
 
-## 📊 Judge Evaluation Mapping
+## 📊 Feature Implementation
 
-### Theme: Human-in-the-Loop System with State Management and Rollback
+### Core Requirements: Human-in-the-Loop, State Management, Rollback
 
 | Criterion | Implementation | Evidence |
 |-----------|---------------|----------|

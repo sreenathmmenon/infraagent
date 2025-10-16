@@ -13,6 +13,7 @@ from agents.action_agent import ActionAgent
 from models.events import WorkflowApprovalRequest
 from services.activity_service import ActivityService
 from services.health_service import HealthDashboardService
+from services.ai_postmortem import PostMortemGenerator
 
 # Initialize FastAPI app
 app = FastAPI(title="InfraAgent API", version="1.0.0")
@@ -33,6 +34,7 @@ action_agent = ActionAgent()
 # Initialize services
 activity_service = ActivityService()
 health_service = HealthDashboardService()
+postmortem_generator = PostMortemGenerator()
 
 # WebSocket connections
 active_connections: List[WebSocket] = []
@@ -478,6 +480,36 @@ async def get_security_summary():
 async def get_compliance_status():
     """Get compliance status"""
     return health_service.get_compliance_status()
+
+
+# ============== AI POST-MORTEM API ==============
+
+@app.post("/api/activities/{activity_id}/postmortem")
+async def generate_postmortem(activity_id: str):
+    """
+    Generate AI-powered post-mortem report for a completed activity
+
+    Args:
+        activity_id: ID of the activity to generate report for
+
+    Returns:
+        Post-mortem report with timeline, root cause, impact, lessons learned
+    """
+    # Get activity details
+    activity = activity_service.get_activity(activity_id)
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Generate report
+    try:
+        report = await postmortem_generator.generate_report(activity.model_dump(mode='json'))
+        return {
+            "status": "success",
+            "activity_id": activity_id,
+            "report": report
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
 
 
 # Root endpoint

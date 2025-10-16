@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-websockets
-sqlalchemy
-pydantic
-python-multipart
-aiofiles

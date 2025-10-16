@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import RollbackModal from './RollbackModal'
+import PostMortemModal from './PostMortemModal'
 
 const ACTIVITY_ICONS = {
   alert_fix: '🚨',
@@ -70,7 +71,7 @@ const RollbackTimer = ({ expiresAt, activityId, onRollback }) => {
   )
 }
 
-const ActivityCard = ({ activity, onExpand, onRollback, isExpanded }) => {
+const ActivityCard = ({ activity, onExpand, onRollback, onPostMortem, isExpanded }) => {
   const icon = ACTIVITY_ICONS[activity.type] || '📋'
   const colorClass = ACTIVITY_COLORS[activity.type] || 'bg-gray-50 border-gray-200 text-gray-800'
 
@@ -169,6 +170,18 @@ const ActivityCard = ({ activity, onExpand, onRollback, isExpanded }) => {
                 <div className="text-orange-700">{new Date(activity.rollback.performed_at).toLocaleString()}</div>
               </div>
             )}
+
+            {activity.status === 'completed' && (
+              <button
+                onClick={() => onPostMortem(activity.id)}
+                className="mt-3 w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Generate AI Post-Mortem
+              </button>
+            )}
           </div>
         </div>
 
@@ -195,6 +208,7 @@ export default function RecentActivities({ onToast }) {
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState(null)
   const [rollbackActivity, setRollbackActivity] = useState(null)
+  const [postmortemActivity, setPostmortemActivity] = useState(null)
 
   useEffect(() => {
     fetchActivities()
@@ -273,6 +287,13 @@ export default function RecentActivities({ onToast }) {
     setExpandedId(expandedId === activityId ? null : activityId)
   }
 
+  const handlePostMortem = (activityId) => {
+    const activity = activities.find(a => a.id === activityId)
+    if (activity) {
+      setPostmortemActivity(activity)
+    }
+  }
+
   if (loading) {
     return (
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
@@ -304,6 +325,7 @@ export default function RecentActivities({ onToast }) {
                 activity={activity}
                 onExpand={handleExpand}
                 onRollback={handleRollback}
+                onPostMortem={handlePostMortem}
                 isExpanded={expandedId === activity.id}
               />
             ))}
@@ -317,6 +339,14 @@ export default function RecentActivities({ onToast }) {
           activity={rollbackActivity}
           onConfirm={confirmRollback}
           onCancel={() => setRollbackActivity(null)}
+        />
+      )}
+
+      {/* Post-Mortem Modal */}
+      {postmortemActivity && (
+        <PostMortemModal
+          activity={postmortemActivity}
+          onClose={() => setPostmortemActivity(null)}
         />
       )}
     </>
