@@ -83,11 +83,66 @@ npm run dev
 
 ## 📐 Architecture
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system diagrams including:
-- High-level system architecture
-- Complete workflow diagram (Alert → AI → Human → Execute → Rollback)
-- AI integration points diagram
-- State management flow
+### System Workflow
+
+```
+                        ┌─────────────────────────┐
+                        │    1. Alert Fires       │
+                        │   (CPU spike, etc.)     │
+                        └───────────┬─────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────────────┐
+                    │   2. Config Agent (🤖 AI-Powered)    │
+                    │                                       │
+                    │   • Analyzes alert context           │
+                    │   • Suggests remediation             │
+                    │   • Confidence: 87%                  │
+                    │   • Risk: Low/Medium/High            │
+                    └───────────────┬───────────────────────┘
+                                    │
+                                    ▼
+        ┌───────────────────────────────────────────┐
+        │   3. Human-in-the-Loop Decision           │
+        │                                           │
+        │   Operator reviews:                       │
+        │   ✓ AI Recommendation                     │
+        │   ✓ Confidence Score                      │
+        │   ✓ Risk Level                            │
+        │                                           │
+        │   [Approve] 👍  or  [Reject] 👎          │
+        └─────┬─────────────────────────────┬───────┘
+              │                             │
+    ┌─────────▼──────┐              ┌──────▼────────┐
+    │   APPROVED     │              │   REJECTED    │
+    └─────┬──────────┘              └───────────────┘
+          │
+          ▼
+┌──────────────────────┐
+│  4. Action Agent     │
+│     Execution        │
+│                      │
+│  • Step 1: Backup   │
+│  • Step 2: Execute  │
+│  • Step 3: Verify   │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────────────────────────┐
+│   5. Completed + 5-Minute Rollback       │
+│                                          │
+│   Activity logged in history             │
+│   Rollback timer: ⏱️ 4:58... 4:57...    │
+│                                          │
+│   [Rollback] button available            │
+└────────────┬─────────────────────────────┘
+             │
+             ├──── Within 5 min ────▶ Rollback available
+             │
+             └──── After 5 min ─────▶ Permanent
+```
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed diagrams including AI integration points and state management.
 
 ---
 
