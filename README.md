@@ -11,9 +11,7 @@ InfraAgent is an intelligent DevOps copilot that automates infrastructure issue 
 
 ## 🎥 Demo Video
 
-[![InfraAgent Demo](https://cdn.loom.com/sessions/thumbnails/656bbda79c5040a19aca1f7a0cecd66a-with-play.gif)](https://www.loom.com/share/656bbda79c5040a19aca1f7a0cecd66a?sid=5e747b27-df23-4d3e-a863-c4d66b1569c0)
-
-**Watch the full demo:** [https://www.loom.com/share/656bbda79c5040a19aca1f7a0cecd66a](https://www.loom.com/share/656bbda79c5040a19aca1f7a0cecd66a?sid=5e747b27-df23-4d3e-a863-c4d66b1569c0)
+**Watch the full walkthrough:** [https://www.loom.com/share/656bbda79c5040a19aca1f7a0cecd66a](https://www.loom.com/share/656bbda79c5040a19aca1f7a0cecd66a?sid=5e747b27-df23-4d3e-a863-c4d66b1569c0)
 
 ---
 
