@@ -4,6 +4,11 @@ InfraAgent is an intelligent DevOps copilot that automates infrastructure issue 
 
 **Key Theme**: Human-in-the-Loop System with State Management and Rollback
 
+## 🌐 Live Demo
+
+**Frontend UI**: [https://infra-agent-lilac.vercel.app/](https://infra-agent-lilac.vercel.app/)
+**GitHub Repository**: [https://github.com/sreenathmmenon/infraagent](https://github.com/sreenathmmenon/infraagent)
+
 ---
 
 ## 🎯 Core Features
