@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://infraagent-14zf.onrender.com/$1"
+      "destination": "https://infraagent-14zf.onrender.com/api/$1"
     }
   ]
 }
