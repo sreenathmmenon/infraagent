@@ -1,0 +1,111 @@
+{
+  "servers": [
+    {
+      "id": "prod-web-03",
+      "type": "web-server",
+      "zone": "us-east-1a",
+      "ip": "10.0.1.15",
+      "dependencies": ["prod-db-01", "cache-redis-01"],
+      "dependents": ["prod-lb-01"],
+      "current_config": {
+        "max_connections": 1000,
+        "timeout": 30,
+        "worker_processes": 4,
+        "memory_limit": "4GB"
+      },
+      "metrics": {
+        "cpu_usage": 95,
+        "memory_usage": 78,
+        "network_in": "150 Mbps",
+        "network_out": "80 Mbps"
+      }
+    },
+    {
+      "id": "prod-db-01",
+      "type": "database",
+      "zone": "us-east-1a",
+      "ip": "10.0.2.10",
+      "dependencies": [],
+      "dependents": ["prod-web-03", "prod-web-04", "prod-api-gateway"],
+      "current_config": {
+        "max_connections": 500,
+        "buffer_pool_size": "8GB",
+        "log_retention_days": 90
+      },
+      "metrics": {
+        "cpu_usage": 65,
+        "memory_usage": 82,
+        "disk_usage": 97,
+        "disk_size": "500GB"
+      }
+    },
+    {
+      "id": "cache-redis-01",
+      "type": "cache",
+      "zone": "us-east-1b",
+      "ip": "10.0.3.20",
+      "dependencies": [],
+      "dependents": ["prod-web-03", "prod-web-04"],
+      "current_config": {
+        "max_memory": "2GB",
+        "eviction_policy": "allkeys-lru",
+        "timeout": 300
+      },
+      "metrics": {
+        "cpu_usage": 25,
+        "memory_usage": 68,
+        "hit_rate": 92
+      }
+    },
+    {
+      "id": "prod-api-gateway",
+      "type": "api-gateway",
+      "zone": "us-east-1a",
+      "ip": "10.0.1.50",
+      "dependencies": ["prod-db-01", "prod-web-03"],
+      "dependents": ["prod-lb-01"],
+      "current_config": {
+        "rate_limit": 10000,
+        "timeout": 60,
+        "network_path": "primary"
+      },
+      "metrics": {
+        "cpu_usage": 55,
+        "memory_usage": 45,
+        "latency_avg": 450,
+        "requests_per_sec": 8500
+      }
+    },
+    {
+      "id": "prod-lb-01",
+      "type": "load-balancer",
+      "zone": "us-east-1a",
+      "ip": "10.0.0.10",
+      "dependencies": ["prod-web-03", "prod-api-gateway"],
+      "dependents": [],
+      "current_config": {
+        "algorithm": "round-robin",
+        "health_check_interval": 10
+      },
+      "metrics": {
+        "cpu_usage": 30,
+        "memory_usage": 40,
+        "active_connections": 5000
+      }
+    }
+  ],
+  "network_paths": [
+    {
+      "id": "primary",
+      "route": "us-east-1a -> internet",
+      "latency_avg": 45,
+      "status": "degraded"
+    },
+    {
+      "id": "backup",
+      "route": "us-east-1b -> internet",
+      "latency_avg": 30,
+      "status": "healthy"
+    }
+  ]
+}

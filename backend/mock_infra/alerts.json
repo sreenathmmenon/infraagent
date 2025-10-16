@@ -1,0 +1,134 @@
+[
+  {
+    "id": "alert-001",
+    "timestamp": "2025-10-16T09:30:00Z",
+    "severity": "HIGH",
+    "source": "prod-web-03",
+    "type": "CPU_SPIKE",
+    "metric_value": 95,
+    "threshold": 80,
+    "description": "CPU utilization above 95% for 5 minutes",
+    "tags": ["production", "web-tier", "performance"]
+  },
+  {
+    "id": "alert-002",
+    "timestamp": "2025-10-16T10:15:00Z",
+    "severity": "CRITICAL",
+    "source": "prod-db-01",
+    "type": "DISK_FULL",
+    "metric_value": 97,
+    "threshold": 90,
+    "description": "Disk space at 97% capacity on /var/log partition",
+    "tags": ["production", "database", "storage"]
+  },
+  {
+    "id": "alert-003",
+    "timestamp": "2025-10-16T11:00:00Z",
+    "severity": "MEDIUM",
+    "source": "prod-api-gateway",
+    "type": "HIGH_LATENCY",
+    "metric_value": 450,
+    "threshold": 200,
+    "description": "API response time increased to 450ms (threshold: 200ms)",
+    "tags": ["production", "api", "latency"]
+  },
+  {
+    "id": "alert-004",
+    "timestamp": "2025-10-16T11:30:00Z",
+    "severity": "CRITICAL",
+    "source": "prod-app-worker-07",
+    "type": "MEMORY_LEAK",
+    "metric_value": 14.5,
+    "threshold": 12,
+    "description": "Memory usage growing steadily: 14.5GB used (limit: 16GB)",
+    "tags": ["production", "worker", "memory"]
+  },
+  {
+    "id": "alert-005",
+    "timestamp": "2025-10-16T12:00:00Z",
+    "severity": "HIGH",
+    "source": "prod-loadbalancer",
+    "type": "SSL_EXPIRING",
+    "metric_value": 7,
+    "threshold": 30,
+    "description": "SSL certificate expires in 7 days for *.example.com",
+    "tags": ["production", "security", "ssl"]
+  },
+  {
+    "id": "alert-006",
+    "timestamp": "2025-10-16T12:15:00Z",
+    "severity": "CRITICAL",
+    "source": "prod-api-server-02",
+    "type": "HIGH_ERROR_RATE",
+    "metric_value": 15.3,
+    "threshold": 5,
+    "description": "Error rate at 15.3% (threshold: 5%) - 500 errors spiking",
+    "tags": ["production", "api", "errors"]
+  },
+  {
+    "id": "alert-007",
+    "timestamp": "2025-10-16T12:30:00Z",
+    "severity": "HIGH",
+    "source": "prod-rabbitmq-01",
+    "type": "QUEUE_BACKLOG",
+    "metric_value": 125000,
+    "threshold": 50000,
+    "description": "Message queue 'notifications' has 125K pending messages",
+    "tags": ["production", "messaging", "rabbitmq"]
+  },
+  {
+    "id": "alert-008",
+    "timestamp": "2025-10-16T13:00:00Z",
+    "severity": "MEDIUM",
+    "source": "prod-k8s-node-05",
+    "type": "CONTAINER_RESTART_LOOP",
+    "metric_value": 12,
+    "threshold": 5,
+    "description": "Container 'auth-service' restarted 12 times in 10 minutes",
+    "tags": ["production", "kubernetes", "stability"]
+  },
+  {
+    "id": "alert-009",
+    "timestamp": "2025-10-16T13:15:00Z",
+    "severity": "CRITICAL",
+    "source": "prod-security-scanner",
+    "type": "SECURITY_VULNERABILITY",
+    "metric_value": 3,
+    "threshold": 0,
+    "description": "3 critical CVEs detected in production image: log4j, openssl",
+    "tags": ["production", "security", "compliance"]
+  },
+  {
+    "id": "alert-010",
+    "timestamp": "2025-10-16T13:30:00Z",
+    "severity": "MEDIUM",
+    "source": "prod-network-mon",
+    "type": "PACKET_LOSS",
+    "metric_value": 3.2,
+    "threshold": 1,
+    "description": "Network packet loss at 3.2% between us-east-1 and eu-west-1",
+    "tags": ["production", "network", "connectivity"]
+  },
+  {
+    "id": "alert-011",
+    "timestamp": "2025-10-16T14:00:00Z",
+    "severity": "HIGH",
+    "source": "prod-db-pool",
+    "type": "CONNECTION_POOL_EXHAUSTED",
+    "metric_value": 98,
+    "threshold": 90,
+    "description": "Database connection pool 98% utilized (490/500 connections)",
+    "tags": ["production", "database", "connections"]
+  },
+  {
+    "id": "alert-012",
+    "timestamp": "2025-10-16T14:15:00Z",
+    "severity": "MEDIUM",
+    "source": "prod-cache-redis-02",
+    "type": "CACHE_HIT_RATE_LOW",
+    "metric_value": 45,
+    "threshold": 80,
+    "description": "Redis cache hit rate dropped to 45% (expected: >80%)",
+    "tags": ["production", "cache", "performance"]
+  }
+]

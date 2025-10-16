@@ -1,0 +1,134 @@
+[
+  {
+    "id": "incident-2025-10-12-001",
+    "alert_type": "CPU_SPIKE",
+    "source": "prod-web-03",
+    "timestamp": "2025-10-12T14:30:00Z",
+    "resolution_time_seconds": 180,
+    "fix_applied": "Increased max_connections from 800 to 1200",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 127.50
+  },
+  {
+    "id": "incident-2025-10-08-003",
+    "alert_type": "CPU_SPIKE",
+    "source": "prod-web-02",
+    "timestamp": "2025-10-08T09:15:00Z",
+    "resolution_time_seconds": 240,
+    "fix_applied": "Increased worker_processes from 4 to 6",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 145.00
+  },
+  {
+    "id": "incident-2025-10-04-007",
+    "alert_type": "CPU_SPIKE",
+    "source": "prod-web-03",
+    "timestamp": "2025-10-04T16:45:00Z",
+    "resolution_time_seconds": 420,
+    "fix_applied": "Rate limiting + worker increase",
+    "outcome": "success",
+    "manual_intervention": true,
+    "cost_saved": 0
+  },
+  {
+    "id": "incident-2025-09-28-012",
+    "alert_type": "CPU_SPIKE",
+    "source": "prod-web-01",
+    "timestamp": "2025-09-28T11:20:00Z",
+    "resolution_time_seconds": 195,
+    "fix_applied": "Increased max_connections from 1000 to 1500",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 132.00
+  },
+  {
+    "id": "incident-2025-09-22-005",
+    "alert_type": "CPU_SPIKE",
+    "source": "prod-web-03",
+    "timestamp": "2025-09-22T08:00:00Z",
+    "resolution_time_seconds": 310,
+    "fix_applied": "Increased max_connections from 1000 to 1500",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 156.00
+  },
+  {
+    "id": "incident-2025-10-10-002",
+    "alert_type": "DISK_FULL",
+    "source": "prod-db-01",
+    "timestamp": "2025-10-10T03:30:00Z",
+    "resolution_time_seconds": 450,
+    "fix_applied": "Archived logs older than 30 days",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 198.50
+  },
+  {
+    "id": "incident-2025-09-25-008",
+    "alert_type": "DISK_FULL",
+    "source": "prod-db-02",
+    "timestamp": "2025-09-25T19:15:00Z",
+    "resolution_time_seconds": 380,
+    "fix_applied": "Compressed and archived old logs",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 175.00
+  },
+  {
+    "id": "incident-2025-09-15-011",
+    "alert_type": "DISK_FULL",
+    "source": "prod-db-01",
+    "timestamp": "2025-09-15T14:00:00Z",
+    "resolution_time_seconds": 520,
+    "fix_applied": "Manual cleanup + partition resize",
+    "outcome": "success",
+    "manual_intervention": true,
+    "cost_saved": 0
+  },
+  {
+    "id": "incident-2025-10-14-004",
+    "alert_type": "HIGH_LATENCY",
+    "source": "prod-api-gateway",
+    "timestamp": "2025-10-14T12:30:00Z",
+    "resolution_time_seconds": 85,
+    "fix_applied": "Switched to backup network path",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 95.00
+  },
+  {
+    "id": "incident-2025-10-06-006",
+    "alert_type": "HIGH_LATENCY",
+    "source": "prod-api-gateway",
+    "timestamp": "2025-10-06T17:45:00Z",
+    "resolution_time_seconds": 120,
+    "fix_applied": "Network path failover to us-east-1b",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 110.00
+  },
+  {
+    "id": "incident-2025-09-30-009",
+    "alert_type": "HIGH_LATENCY",
+    "source": "prod-api-gateway",
+    "timestamp": "2025-09-30T10:15:00Z",
+    "resolution_time_seconds": 280,
+    "fix_applied": "ISP routing investigation + failover",
+    "outcome": "success",
+    "manual_intervention": true,
+    "cost_saved": 0
+  },
+  {
+    "id": "incident-2025-09-18-010",
+    "alert_type": "HIGH_LATENCY",
+    "source": "prod-web-04",
+    "timestamp": "2025-09-18T22:00:00Z",
+    "resolution_time_seconds": 95,
+    "fix_applied": "Network path optimization",
+    "outcome": "success",
+    "manual_intervention": false,
+    "cost_saved": 88.00
+  }
+]

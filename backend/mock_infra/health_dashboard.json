@@ -1,0 +1,371 @@
+{
+  "last_updated": "2025-10-16T10:30:00Z",
+  "overall_health": {
+    "status": "degraded",
+    "score": 87,
+    "active_alerts": 1,
+    "services_total": 15,
+    "services_healthy": 12,
+    "services_degraded": 2,
+    "services_critical": 1
+  },
+  "services": [
+    {
+      "id": "prod-web-01",
+      "name": "Web Server 01",
+      "type": "nginx",
+      "status": "healthy",
+      "region": "us-east-1a",
+      "metrics": {
+        "cpu_percent": 45,
+        "memory_percent": 62,
+        "disk_percent": 58,
+        "network_mbps": 125,
+        "active_connections": 843,
+        "requests_per_sec": 234
+      },
+      "uptime_days": 45,
+      "last_deployed": "2025-09-15T14:22:00Z",
+      "version": "2.3.1"
+    },
+    {
+      "id": "prod-web-02",
+      "name": "Web Server 02",
+      "type": "nginx",
+      "status": "healthy",
+      "region": "us-east-1b",
+      "metrics": {
+        "cpu_percent": 52,
+        "memory_percent": 68,
+        "disk_percent": 61,
+        "network_mbps": 145,
+        "active_connections": 921,
+        "requests_per_sec": 267
+      },
+      "uptime_days": 45,
+      "last_deployed": "2025-09-15T14:25:00Z",
+      "version": "2.3.1"
+    },
+    {
+      "id": "prod-web-03",
+      "name": "Web Server 03",
+      "type": "nginx",
+      "status": "critical",
+      "region": "us-east-1c",
+      "metrics": {
+        "cpu_percent": 95,
+        "memory_percent": 88,
+        "disk_percent": 64,
+        "network_mbps": 198,
+        "active_connections": 1247,
+        "requests_per_sec": 412
+      },
+      "uptime_days": 45,
+      "last_deployed": "2025-09-15T14:28:00Z",
+      "version": "2.3.1",
+      "active_alert": "CPU utilization above 95%"
+    },
+    {
+      "id": "prod-api-01",
+      "name": "API Server 01",
+      "type": "node",
+      "status": "healthy",
+      "region": "us-east-1a",
+      "metrics": {
+        "cpu_percent": 38,
+        "memory_percent": 71,
+        "disk_percent": 42,
+        "network_mbps": 87,
+        "active_connections": 456,
+        "requests_per_sec": 189
+      },
+      "uptime_days": 12,
+      "last_deployed": "2025-10-04T09:15:00Z",
+      "version": "2.3.1"
+    },
+    {
+      "id": "prod-api-02",
+      "name": "API Server 02",
+      "type": "node",
+      "status": "healthy",
+      "region": "us-east-1b",
+      "metrics": {
+        "cpu_percent": 42,
+        "memory_percent": 74,
+        "disk_percent": 45,
+        "network_mbps": 93,
+        "active_connections": 487,
+        "requests_per_sec": 201
+      },
+      "uptime_days": 12,
+      "last_deployed": "2025-10-04T09:18:00Z",
+      "version": "2.3.1"
+    },
+    {
+      "id": "db-prod-01",
+      "name": "Database Primary",
+      "type": "postgresql",
+      "status": "healthy",
+      "region": "us-east-1a",
+      "metrics": {
+        "cpu_percent": 56,
+        "memory_percent": 78,
+        "disk_percent": 72,
+        "network_mbps": 167,
+        "active_connections": 87,
+        "queries_per_sec": 543
+      },
+      "uptime_days": 127,
+      "last_deployed": "2025-06-10T16:30:00Z",
+      "version": "14.9",
+      "role": "primary"
+    },
+    {
+      "id": "db-prod-02",
+      "name": "Database Replica",
+      "type": "postgresql",
+      "status": "degraded",
+      "region": "us-east-1b",
+      "metrics": {
+        "cpu_percent": 48,
+        "memory_percent": 76,
+        "disk_percent": 94,
+        "network_mbps": 134,
+        "active_connections": 23,
+        "queries_per_sec": 198,
+        "replication_lag_ms": 45
+      },
+      "uptime_days": 127,
+      "last_deployed": "2025-06-10T16:35:00Z",
+      "version": "14.9",
+      "role": "replica",
+      "warning": "Disk usage at 94%"
+    },
+    {
+      "id": "cache-prod-01",
+      "name": "Redis Cache 01",
+      "type": "redis",
+      "status": "healthy",
+      "region": "us-east-1a",
+      "metrics": {
+        "cpu_percent": 12,
+        "memory_percent": 64,
+        "disk_percent": 23,
+        "network_mbps": 234,
+        "active_connections": 145,
+        "ops_per_sec": 12453
+      },
+      "uptime_days": 89,
+      "last_deployed": "2025-07-18T11:20:00Z",
+      "version": "7.0.12"
+    },
+    {
+      "id": "cache-prod-02",
+      "name": "Redis Cache 02",
+      "type": "redis",
+      "status": "healthy",
+      "region": "us-east-1b",
+      "metrics": {
+        "cpu_percent": 15,
+        "memory_percent": 68,
+        "disk_percent": 25,
+        "network_mbps": 256,
+        "active_connections": 167,
+        "ops_per_sec": 13782
+      },
+      "uptime_days": 89,
+      "last_deployed": "2025-07-18T11:25:00Z",
+      "version": "7.0.12"
+    },
+    {
+      "id": "rabbitmq-prod-01",
+      "name": "Message Queue",
+      "type": "rabbitmq",
+      "status": "healthy",
+      "region": "us-east-1a",
+      "metrics": {
+        "cpu_percent": 34,
+        "memory_percent": 58,
+        "disk_percent": 47,
+        "network_mbps": 89,
+        "active_connections": 234,
+        "messages_per_sec": 1843,
+        "queue_depth": 127
+      },
+      "uptime_days": 156,
+      "last_deployed": "2025-05-12T08:45:00Z",
+      "version": "3.12.6"
+    },
+    {
+      "id": "worker-prod-01",
+      "name": "Background Worker 01",
+      "type": "python",
+      "status": "healthy",
+      "region": "us-east-1a",
+      "metrics": {
+        "cpu_percent": 67,
+        "memory_percent": 82,
+        "disk_percent": 38,
+        "network_mbps": 45,
+        "active_jobs": 12,
+        "jobs_per_hour": 245
+      },
+      "uptime_days": 23,
+      "last_deployed": "2025-09-23T15:10:00Z",
+      "version": "3.2.1"
+    },
+    {
+      "id": "worker-prod-02",
+      "name": "Background Worker 02",
+      "type": "python",
+      "status": "healthy",
+      "region": "us-east-1b",
+      "metrics": {
+        "cpu_percent": 72,
+        "memory_percent": 79,
+        "disk_percent": 41,
+        "network_mbps": 52,
+        "active_jobs": 15,
+        "jobs_per_hour": 267
+      },
+      "uptime_days": 23,
+      "last_deployed": "2025-09-23T15:15:00Z",
+      "version": "3.2.1"
+    },
+    {
+      "id": "prod-lb-01",
+      "name": "Load Balancer",
+      "type": "haproxy",
+      "status": "healthy",
+      "region": "us-east-1",
+      "metrics": {
+        "cpu_percent": 23,
+        "memory_percent": 34,
+        "disk_percent": 18,
+        "network_mbps": 456,
+        "active_connections": 2845,
+        "requests_per_sec": 789
+      },
+      "uptime_days": 234,
+      "last_deployed": "2025-03-25T10:00:00Z",
+      "version": "2.8.3"
+    },
+    {
+      "id": "monitoring-prod-01",
+      "name": "Monitoring Stack",
+      "type": "prometheus",
+      "status": "degraded",
+      "region": "us-east-1a",
+      "metrics": {
+        "cpu_percent": 58,
+        "memory_percent": 91,
+        "disk_percent": 88,
+        "network_mbps": 123,
+        "active_targets": 45,
+        "scrapes_per_min": 2700
+      },
+      "uptime_days": 178,
+      "last_deployed": "2025-04-20T12:30:00Z",
+      "version": "2.47.0",
+      "warning": "High memory usage, disk space low"
+    },
+    {
+      "id": "storage-prod-01",
+      "name": "S3 Gateway",
+      "type": "minio",
+      "status": "healthy",
+      "region": "us-east-1a",
+      "metrics": {
+        "cpu_percent": 28,
+        "memory_percent": 52,
+        "disk_percent": 67,
+        "network_mbps": 234,
+        "active_connections": 89,
+        "operations_per_sec": 345
+      },
+      "uptime_days": 267,
+      "last_deployed": "2025-01-22T09:15:00Z",
+      "version": "2023.12.02"
+    }
+  ],
+  "aggregate_metrics": {
+    "total_requests_per_sec": 1890,
+    "total_cpu_cores_used": 156,
+    "total_memory_gb_used": 234,
+    "total_disk_tb_used": 8.4,
+    "total_network_gbps": 2.1,
+    "avg_response_time_ms": 87,
+    "error_rate_percent": 0.12
+  },
+  "recent_deployments": [
+    {
+      "service": "prod-api-01",
+      "version": "2.3.1",
+      "status": "success",
+      "timestamp": "2025-10-04T09:15:00Z",
+      "duration_seconds": 312
+    },
+    {
+      "service": "prod-web-03",
+      "version": "2.3.1",
+      "status": "success",
+      "timestamp": "2025-09-15T14:28:00Z",
+      "duration_seconds": 287
+    },
+    {
+      "service": "worker-prod-01",
+      "version": "3.2.1",
+      "status": "success",
+      "timestamp": "2025-09-23T15:10:00Z",
+      "duration_seconds": 156
+    }
+  ],
+  "cost_metrics": {
+    "monthly_spend_usd": 12450,
+    "projected_monthly_usd": 12890,
+    "savings_opportunities": [
+      {
+        "type": "idle_resources",
+        "description": "3 instances with < 20% utilization",
+        "potential_monthly_savings_usd": 240
+      },
+      {
+        "type": "rightsizing",
+        "description": "Over-provisioned memory on 2 services",
+        "potential_monthly_savings_usd": 180
+      },
+      {
+        "type": "reserved_instances",
+        "description": "Convert 5 on-demand instances to reserved",
+        "potential_monthly_savings_usd": 420
+      }
+    ]
+  },
+  "compliance_status": {
+    "soc2": {
+      "status": "compliant",
+      "last_audit": "2025-09-01",
+      "next_audit": "2026-03-01"
+    },
+    "hipaa": {
+      "status": "compliant",
+      "last_audit": "2025-08-15",
+      "next_audit": "2026-02-15"
+    },
+    "gdpr": {
+      "status": "compliant",
+      "last_review": "2025-10-01"
+    }
+  },
+  "security_summary": {
+    "open_vulnerabilities": {
+      "critical": 0,
+      "high": 2,
+      "medium": 8,
+      "low": 15
+    },
+    "last_security_scan": "2025-10-16T02:00:00Z",
+    "patches_pending": 12,
+    "ssl_certificates_expiring_30days": 0
+  }
+}

@@ -1,0 +1,273 @@
+[
+  {
+    "id": "act-001",
+    "type": "alert_fix",
+    "alert_id": "alert-cpu-spike",
+    "title": "CPU Spike Fixed on prod-web-03",
+    "description": "Automated fix applied for high CPU utilization",
+    "timestamp": "2025-10-16T10:28:00Z",
+    "status": "completed",
+    "severity": "high",
+    "workflow_id": "wf-cpu-001",
+    "approved_by": "demo-user",
+    "changes_made": [
+      {
+        "action": "Configuration Update",
+        "detail": "Updated nginx worker_processes: 4 → 8",
+        "target": "prod-web-03:/etc/nginx/nginx.conf"
+      },
+      {
+        "action": "Service Reload",
+        "detail": "Reloaded nginx service (zero downtime)",
+        "target": "prod-web-03"
+      },
+      {
+        "action": "Verification",
+        "detail": "CPU utilization reduced from 95% to 68%",
+        "target": "prod-web-03"
+      }
+    ],
+    "runbook_used": "cpu-spike-mitigation",
+    "metrics_before": {
+      "cpu_percent": 95,
+      "memory_percent": 72,
+      "active_connections": 1250
+    },
+    "metrics_after": {
+      "cpu_percent": 68,
+      "memory_percent": 70,
+      "active_connections": 1200
+    },
+    "rollback": {
+      "eligible": true,
+      "expires_at": "2025-10-16T10:33:00Z",
+      "window_minutes": 5,
+      "action": "Revert nginx config to previous snapshot",
+      "risk_level": "low",
+      "rollback_steps": [
+        "Restore /etc/nginx/nginx.conf from backup-2025-10-16-10-27.conf",
+        "Reload nginx service",
+        "Verify configuration and service status"
+      ]
+    }
+  },
+  {
+    "id": "act-002",
+    "type": "message_queue_maintenance",
+    "title": "RabbitMQ Queue Purged - stale-events",
+    "description": "Cleared 45,000 stale messages from event processing queue",
+    "timestamp": "2025-10-16T10:15:00Z",
+    "status": "completed",
+    "severity": "medium",
+    "workflow_id": "wf-rabbitmq-001",
+    "approved_by": "demo-user",
+    "changes_made": [
+      {
+        "action": "Queue Analysis",
+        "detail": "Identified 45,127 messages older than 24 hours",
+        "target": "rabbitmq-prod-01:queue/stale-events"
+      },
+      {
+        "action": "Queue Purge",
+        "detail": "Purged 45,127 stale messages from queue",
+        "target": "rabbitmq-prod-01:queue/stale-events"
+      },
+      {
+        "action": "Consumer Verification",
+        "detail": "Verified 12 active consumers resumed normal processing",
+        "target": "rabbitmq-prod-01"
+      }
+    ],
+    "runbook_used": "rabbitmq-queue-purge",
+    "metrics_before": {
+      "queue_depth": 45127,
+      "consumer_count": 12,
+      "message_age_max": "26h"
+    },
+    "metrics_after": {
+      "queue_depth": 0,
+      "consumer_count": 12,
+      "message_age_max": "0s"
+    },
+    "rollback": {
+      "eligible": false,
+      "reason": "Message purge operations are not reversible",
+      "alternative": "Messages backed up to S3: s3://backups/rabbitmq/stale-events-2025-10-16.json"
+    }
+  },
+  {
+    "id": "act-003",
+    "type": "disk_cleanup",
+    "title": "Disk Space Recovered on db-prod-02",
+    "description": "Cleaned old log files and freed 45GB disk space",
+    "timestamp": "2025-10-16T09:45:00Z",
+    "status": "completed",
+    "severity": "critical",
+    "workflow_id": "wf-disk-001",
+    "approved_by": "demo-user",
+    "changes_made": [
+      {
+        "action": "Log Rotation",
+        "detail": "Compressed and archived logs older than 30 days",
+        "target": "db-prod-02:/var/log/postgresql/"
+      },
+      {
+        "action": "Temporary Files Cleanup",
+        "detail": "Removed 12GB of temporary query files",
+        "target": "db-prod-02:/tmp/postgres_temp/"
+      },
+      {
+        "action": "Old Backups Cleanup",
+        "detail": "Removed backups older than 90 days (moved to S3 glacier)",
+        "target": "db-prod-02:/backup/"
+      }
+    ],
+    "runbook_used": "disk-space-recovery",
+    "metrics_before": {
+      "disk_used_percent": 94,
+      "disk_free_gb": 8,
+      "inode_used_percent": 87
+    },
+    "metrics_after": {
+      "disk_used_percent": 72,
+      "disk_free_gb": 53,
+      "inode_used_percent": 68
+    },
+    "rollback": {
+      "eligible": true,
+      "expires_at": "2025-10-16T09:55:00Z",
+      "window_minutes": 10,
+      "action": "Restore archived logs and temporary files",
+      "risk_level": "medium",
+      "rollback_steps": [
+        "Restore compressed logs from /archive/",
+        "Restore temp files from backup",
+        "Verify database operations"
+      ]
+    }
+  },
+  {
+    "id": "act-004",
+    "type": "deployment",
+    "title": "Deployed API v2.3.1 to Production",
+    "description": "Blue-green deployment with zero downtime",
+    "timestamp": "2025-10-16T09:15:00Z",
+    "status": "completed",
+    "severity": "medium",
+    "workflow_id": "wf-deploy-001",
+    "approved_by": "demo-user",
+    "changes_made": [
+      {
+        "action": "Blue-Green Deployment",
+        "detail": "Deployed v2.3.1 to green environment",
+        "target": "prod-api-cluster (green)"
+      },
+      {
+        "action": "Health Check",
+        "detail": "Verified all health endpoints passed",
+        "target": "prod-api-cluster (green)"
+      },
+      {
+        "action": "Traffic Switch",
+        "detail": "Switched load balancer to green environment",
+        "target": "prod-lb-01"
+      }
+    ],
+    "runbook_used": "blue-green-deployment",
+    "metrics_before": {
+      "version": "2.3.0",
+      "active_instances": 8,
+      "response_time_p99": 245
+    },
+    "metrics_after": {
+      "version": "2.3.1",
+      "active_instances": 8,
+      "response_time_p99": 198
+    },
+    "rollback": {
+      "eligible": false,
+      "reason": "Rollback window expired (5min limit)",
+      "was_available_until": "2025-10-16T09:20:00Z",
+      "note": "Blue environment with v2.3.0 still available for manual rollback"
+    }
+  },
+  {
+    "id": "act-005",
+    "type": "security_patch",
+    "title": "Security Patch Applied - CVE-2025-1234",
+    "description": "Applied critical OpenSSL security patch",
+    "timestamp": "2025-10-16T08:30:00Z",
+    "status": "rolled_back",
+    "severity": "critical",
+    "workflow_id": "wf-security-001",
+    "approved_by": "demo-user",
+    "changes_made": [
+      {
+        "action": "Package Update",
+        "detail": "Updated openssl: 1.1.1t → 1.1.1u",
+        "target": "all-prod-servers"
+      },
+      {
+        "action": "Service Restart",
+        "detail": "Restarted nginx, postgresql, redis",
+        "target": "all-prod-servers"
+      }
+    ],
+    "runbook_used": "security-patch-deployment",
+    "rollback": {
+      "eligible": false,
+      "performed_at": "2025-10-16T08:42:00Z",
+      "performed_by": "demo-user",
+      "reason": "TLS handshake failures detected post-patch (12% error rate)",
+      "rollback_steps": [
+        "Downgraded openssl to 1.1.1t",
+        "Restarted all affected services",
+        "Verified TLS connections restored"
+      ]
+    }
+  },
+  {
+    "id": "act-006",
+    "type": "config_change",
+    "title": "Database Connection Pool Optimized",
+    "description": "Adjusted connection pool settings based on workload analysis",
+    "timestamp": "2025-10-16T07:50:00Z",
+    "status": "completed",
+    "severity": "low",
+    "workflow_id": "wf-config-001",
+    "approved_by": "demo-user",
+    "changes_made": [
+      {
+        "action": "Configuration Update",
+        "detail": "max_connections: 100 → 150",
+        "target": "db-prod-01,db-prod-02"
+      },
+      {
+        "action": "Configuration Update",
+        "detail": "shared_buffers: 2GB → 4GB",
+        "target": "db-prod-01,db-prod-02"
+      },
+      {
+        "action": "Service Reload",
+        "detail": "Reloaded PostgreSQL with new settings",
+        "target": "db-prod-01,db-prod-02"
+      }
+    ],
+    "runbook_used": "database-tuning",
+    "metrics_before": {
+      "connection_pool_utilization": 94,
+      "avg_query_time_ms": 145,
+      "connection_wait_time_ms": 23
+    },
+    "metrics_after": {
+      "connection_pool_utilization": 67,
+      "avg_query_time_ms": 112,
+      "connection_wait_time_ms": 3
+    },
+    "rollback": {
+      "eligible": false,
+      "reason": "Rollback window expired (10min limit)",
+      "was_available_until": "2025-10-16T08:00:00Z"
+    }
+  }
+]

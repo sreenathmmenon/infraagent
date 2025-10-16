@@ -1,0 +1,517 @@
+[
+  {
+    "id": "cpu-spike-mitigation",
+    "title": "CPU Spike Mitigation",
+    "description": "Automated response to high CPU utilization on web servers",
+    "category": "performance",
+    "severity": "high",
+    "estimated_duration": "3m",
+    "success_rate": 94,
+    "execution_count": 127,
+    "last_used": "2025-10-16T10:28:00Z",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Backup Current Configuration",
+        "description": "Create backup of existing nginx.conf",
+        "estimated_time": "10s",
+        "command": "cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak-$(date +%Y%m%d-%H%M%S)",
+        "validation": "Verify backup file exists",
+        "rollback_impact": "Required for rollback"
+      },
+      {
+        "step": 2,
+        "name": "Analyze CPU Usage Pattern",
+        "description": "Identify top processes and connection count",
+        "estimated_time": "15s",
+        "command": "top -bn1 | head -20; netstat -an | grep ESTABLISHED | wc -l",
+        "validation": "Parse top output and connection count"
+      },
+      {
+        "step": 3,
+        "name": "Scale Worker Processes",
+        "description": "Increase nginx worker processes based on CPU cores",
+        "estimated_time": "20s",
+        "command": "sed -i 's/worker_processes [0-9]\\+/worker_processes 8/' /etc/nginx/nginx.conf",
+        "validation": "Verify configuration syntax",
+        "rollback_impact": "Can be reverted"
+      },
+      {
+        "step": 4,
+        "name": "Reload Nginx Service",
+        "description": "Gracefully reload nginx with new configuration",
+        "estimated_time": "30s",
+        "command": "nginx -t && systemctl reload nginx",
+        "validation": "Check service status and error logs",
+        "rollback_impact": "Zero downtime reload"
+      },
+      {
+        "step": 5,
+        "name": "Verify Metrics Improvement",
+        "description": "Monitor CPU for 60s to confirm reduction",
+        "estimated_time": "90s",
+        "command": "for i in {1..6}; do top -bn1 | grep 'Cpu(s)' | awk '{print $2}'; sleep 10; done",
+        "validation": "CPU should drop below 80%",
+        "success_criteria": "cpu_percent < 80"
+      },
+      {
+        "step": 6,
+        "name": "Update Monitoring Alert",
+        "description": "Log remediation in monitoring system",
+        "estimated_time": "5s",
+        "command": "curl -X POST monitoring/api/incidents/resolve -d '{\"id\":\"$ALERT_ID\"}'",
+        "validation": "200 OK response"
+      }
+    ],
+    "prerequisites": [
+      "Root or sudo access on target server",
+      "Nginx installed and running",
+      "Sufficient CPU cores available"
+    ],
+    "rollback_steps": [
+      "Restore nginx.conf from backup",
+      "Reload nginx service",
+      "Verify service health"
+    ],
+    "risk_assessment": {
+      "risk_level": "low",
+      "potential_impact": "Temporary connection drops during reload (< 1s)",
+      "mitigation": "Graceful reload maintains existing connections"
+    }
+  },
+  {
+    "id": "rabbitmq-queue-purge",
+    "title": "RabbitMQ Queue Purge",
+    "description": "Safely purge stale messages from RabbitMQ queues",
+    "category": "message_queue",
+    "severity": "medium",
+    "estimated_duration": "2m",
+    "success_rate": 98,
+    "execution_count": 43,
+    "last_used": "2025-10-16T10:15:00Z",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Queue Health Check",
+        "description": "Verify queue exists and check consumer count",
+        "estimated_time": "10s",
+        "command": "rabbitmqctl list_queues name messages consumers",
+        "validation": "Queue exists and has active consumers"
+      },
+      {
+        "step": 2,
+        "name": "Backup Queue Messages",
+        "description": "Export messages to S3 for potential recovery",
+        "estimated_time": "30s",
+        "command": "rabbitmq-backup-queue --queue stale-events --output s3://backups/rabbitmq/",
+        "validation": "Verify S3 backup file created",
+        "rollback_impact": "Enables message recovery if needed"
+      },
+      {
+        "step": 3,
+        "name": "Analyze Message Age",
+        "description": "Check message timestamps to identify stale messages",
+        "estimated_time": "15s",
+        "command": "rabbitmq-message-stats --queue stale-events --age-threshold 24h",
+        "validation": "Count messages older than threshold"
+      },
+      {
+        "step": 4,
+        "name": "Pause Consumers",
+        "description": "Temporarily pause consumers to prevent new message consumption",
+        "estimated_time": "10s",
+        "command": "rabbitmqctl set_queue_mode stale-events pause",
+        "validation": "Queue in paused state",
+        "rollback_impact": "Prevents race conditions during purge"
+      },
+      {
+        "step": 5,
+        "name": "Purge Queue",
+        "description": "Delete stale messages from queue",
+        "estimated_time": "20s",
+        "command": "rabbitmqctl purge_queue stale-events",
+        "validation": "Queue message count = 0",
+        "rollback_impact": "IRREVERSIBLE - messages deleted"
+      },
+      {
+        "step": 6,
+        "name": "Resume Consumers",
+        "description": "Re-enable message consumption",
+        "estimated_time": "5s",
+        "command": "rabbitmqctl set_queue_mode stale-events resume",
+        "validation": "Consumers active and processing"
+      },
+      {
+        "step": 7,
+        "name": "Verify Queue Health",
+        "description": "Monitor queue for 30s to ensure normal operation",
+        "estimated_time": "30s",
+        "command": "watch -n 5 'rabbitmqctl list_queues name messages consumers message_stats'",
+        "validation": "Message flow resumed, no errors",
+        "success_criteria": "consumer_count > 0 && error_rate == 0"
+      }
+    ],
+    "prerequisites": [
+      "RabbitMQ admin credentials",
+      "S3 backup bucket configured",
+      "rabbitmq-backup-queue tool installed"
+    ],
+    "rollback_steps": [
+      "NOTE: Message purge is irreversible",
+      "Can restore from S3 backup if absolutely necessary",
+      "Verify backup integrity before purge"
+    ],
+    "risk_assessment": {
+      "risk_level": "medium",
+      "potential_impact": "Stale messages permanently deleted (backed up to S3)",
+      "mitigation": "Messages backed up before purge, consumer pause prevents race conditions"
+    }
+  },
+  {
+    "id": "disk-space-recovery",
+    "title": "Emergency Disk Space Recovery",
+    "description": "Free up disk space by cleaning logs and temporary files",
+    "category": "storage",
+    "severity": "critical",
+    "estimated_duration": "4m",
+    "success_rate": 96,
+    "execution_count": 89,
+    "last_used": "2025-10-16T09:45:00Z",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Disk Usage Analysis",
+        "description": "Identify largest directories and files",
+        "estimated_time": "20s",
+        "command": "du -sh /var/log/* /tmp/* /backup/* | sort -hr | head -20",
+        "validation": "Parse output to identify cleanup targets"
+      },
+      {
+        "step": 2,
+        "name": "Create Cleanup Plan",
+        "description": "Calculate safe cleanup targets (>30 days old)",
+        "estimated_time": "15s",
+        "command": "find /var/log -type f -mtime +30 -exec ls -lh {} \\; | awk '{sum+=$5} END {print sum}'",
+        "validation": "Estimate space to be freed"
+      },
+      {
+        "step": 3,
+        "name": "Backup Critical Logs",
+        "description": "Archive important logs before deletion",
+        "estimated_time": "60s",
+        "command": "tar -czf /tmp/log-backup-$(date +%Y%m%d).tar.gz /var/log/postgresql/*.log",
+        "validation": "Verify archive created",
+        "rollback_impact": "Required for log recovery"
+      },
+      {
+        "step": 4,
+        "name": "Compress Old Logs",
+        "description": "Compress logs older than 30 days",
+        "estimated_time": "90s",
+        "command": "find /var/log -type f -name '*.log' -mtime +30 -exec gzip {} \\;",
+        "validation": "Verify compressed files exist"
+      },
+      {
+        "step": 5,
+        "name": "Clean Temporary Files",
+        "description": "Remove temporary PostgreSQL query files",
+        "estimated_time": "20s",
+        "command": "find /tmp/postgres_temp -type f -mtime +1 -delete",
+        "validation": "Check freed space",
+        "rollback_impact": "Temp files can be regenerated"
+      },
+      {
+        "step": 6,
+        "name": "Archive Old Backups",
+        "description": "Move backups older than 90 days to S3 Glacier",
+        "estimated_time": "40s",
+        "command": "aws s3 sync /backup/ s3://backups/archive/ --exclude '*' --include '*.bak' --storage-class GLACIER",
+        "validation": "Verify S3 upload success"
+      },
+      {
+        "step": 7,
+        "name": "Remove Archived Backups",
+        "description": "Delete local backups after S3 confirmation",
+        "estimated_time": "10s",
+        "command": "find /backup -type f -name '*.bak' -mtime +90 -delete",
+        "validation": "Verify files deleted"
+      },
+      {
+        "step": 8,
+        "name": "Verify Disk Space",
+        "description": "Confirm disk usage below threshold",
+        "estimated_time": "5s",
+        "command": "df -h / | tail -1 | awk '{print $5}' | sed 's/%//'",
+        "validation": "Disk usage < 85%",
+        "success_criteria": "disk_used_percent < 85"
+      }
+    ],
+    "prerequisites": [
+      "Root access on target server",
+      "AWS CLI configured for S3 access",
+      "Sufficient /tmp space for archives"
+    ],
+    "rollback_steps": [
+      "Restore compressed logs: gunzip /var/log/**/*.gz",
+      "Restore backup archive: tar -xzf /tmp/log-backup-*.tar.gz",
+      "Retrieve backups from S3 if needed"
+    ],
+    "risk_assessment": {
+      "risk_level": "medium",
+      "potential_impact": "Old logs and backups removed (archived to S3)",
+      "mitigation": "All files backed up before deletion, S3 archive for 90-day retention"
+    }
+  },
+  {
+    "id": "blue-green-deployment",
+    "title": "Blue-Green Deployment",
+    "description": "Zero-downtime deployment using blue-green strategy",
+    "category": "deployment",
+    "severity": "medium",
+    "estimated_duration": "5m",
+    "success_rate": 97,
+    "execution_count": 234,
+    "last_used": "2025-10-16T09:15:00Z",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Deploy to Green Environment",
+        "description": "Deploy new version to inactive (green) environment",
+        "estimated_time": "120s",
+        "command": "kubectl set image deployment/api api=myapp:v2.3.1 -n prod-green",
+        "validation": "All pods running with new image"
+      },
+      {
+        "step": 2,
+        "name": "Wait for Green Readiness",
+        "description": "Wait for all green pods to pass readiness checks",
+        "estimated_time": "60s",
+        "command": "kubectl wait --for=condition=ready pod -l app=api -n prod-green --timeout=120s",
+        "validation": "All pods ready"
+      },
+      {
+        "step": 3,
+        "name": "Run Health Checks",
+        "description": "Verify all health endpoints in green environment",
+        "estimated_time": "30s",
+        "command": "for pod in $(kubectl get pods -n prod-green -o name); do kubectl exec -n prod-green $pod -- curl -f localhost:8080/health; done",
+        "validation": "All health checks return 200 OK"
+      },
+      {
+        "step": 4,
+        "name": "Run Smoke Tests",
+        "description": "Execute critical path smoke tests",
+        "estimated_time": "45s",
+        "command": "pytest tests/smoke/ --target=prod-green --parallel",
+        "validation": "All smoke tests pass"
+      },
+      {
+        "step": 5,
+        "name": "Switch Load Balancer",
+        "description": "Point load balancer to green environment",
+        "estimated_time": "15s",
+        "command": "kubectl patch service api-lb -n prod -p '{\"spec\":{\"selector\":{\"environment\":\"green\"}}}'",
+        "validation": "Service endpoints updated",
+        "rollback_impact": "Traffic now flowing to new version"
+      },
+      {
+        "step": 6,
+        "name": "Monitor Metrics",
+        "description": "Watch error rates and latency for 60s",
+        "estimated_time": "60s",
+        "command": "watch -n 5 'curl -s monitoring/api/metrics?service=api&window=1m'",
+        "validation": "Error rate < 1%, p99 latency < 300ms"
+      },
+      {
+        "step": 7,
+        "name": "Drain Blue Environment",
+        "description": "Wait for existing connections to complete",
+        "estimated_time": "30s",
+        "command": "kubectl scale deployment/api --replicas=0 -n prod-blue",
+        "validation": "Blue environment connections = 0"
+      }
+    ],
+    "prerequisites": [
+      "kubectl access to prod namespace",
+      "New container image built and pushed",
+      "Green environment provisioned"
+    ],
+    "rollback_steps": [
+      "Switch load balancer back to blue: kubectl patch service api-lb -n prod -p '{\"spec\":{\"selector\":{\"environment\":\"blue\"}}}'",
+      "Scale up blue environment if needed",
+      "Verify traffic restored"
+    ],
+    "risk_assessment": {
+      "risk_level": "low",
+      "potential_impact": "Brief traffic spike during LB switch (< 2s)",
+      "mitigation": "Blue environment kept running for instant rollback"
+    }
+  },
+  {
+    "id": "database-tuning",
+    "title": "Database Performance Tuning",
+    "description": "Optimize PostgreSQL configuration for current workload",
+    "category": "database",
+    "severity": "low",
+    "estimated_duration": "3m",
+    "success_rate": 91,
+    "execution_count": 67,
+    "last_used": "2025-10-16T07:50:00Z",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Analyze Current Workload",
+        "description": "Check connection pool utilization and query patterns",
+        "estimated_time": "20s",
+        "command": "psql -c 'SELECT count(*) as connections FROM pg_stat_activity;'",
+        "validation": "Parse connection count"
+      },
+      {
+        "step": 2,
+        "name": "Backup Configuration",
+        "description": "Save current postgresql.conf",
+        "estimated_time": "5s",
+        "command": "cp /etc/postgresql/14/main/postgresql.conf /etc/postgresql/14/main/postgresql.conf.bak",
+        "validation": "Backup file exists"
+      },
+      {
+        "step": 3,
+        "name": "Update Connection Pool",
+        "description": "Increase max_connections based on workload",
+        "estimated_time": "10s",
+        "command": "sed -i 's/max_connections = [0-9]\\+/max_connections = 150/' /etc/postgresql/14/main/postgresql.conf",
+        "validation": "Configuration updated"
+      },
+      {
+        "step": 4,
+        "name": "Update Shared Buffers",
+        "description": "Increase shared memory for better caching",
+        "estimated_time": "10s",
+        "command": "sed -i 's/shared_buffers = [0-9]\\+GB/shared_buffers = 4GB/' /etc/postgresql/14/main/postgresql.conf",
+        "validation": "Configuration updated"
+      },
+      {
+        "step": 5,
+        "name": "Reload PostgreSQL",
+        "description": "Apply new configuration (no downtime)",
+        "estimated_time": "20s",
+        "command": "systemctl reload postgresql",
+        "validation": "Service reloaded successfully"
+      },
+      {
+        "step": 6,
+        "name": "Verify Configuration",
+        "description": "Confirm new settings applied",
+        "estimated_time": "10s",
+        "command": "psql -c 'SHOW max_connections; SHOW shared_buffers;'",
+        "validation": "Settings match expected values"
+      },
+      {
+        "step": 7,
+        "name": "Monitor Performance",
+        "description": "Watch connection pool and query performance",
+        "estimated_time": "60s",
+        "command": "watch -n 10 'psql -c \"SELECT count(*) FROM pg_stat_activity;\"'",
+        "validation": "Connection pool utilization stable"
+      }
+    ],
+    "prerequisites": [
+      "PostgreSQL admin access",
+      "Sufficient system memory for increased buffers"
+    ],
+    "rollback_steps": [
+      "Restore postgresql.conf from backup",
+      "Reload PostgreSQL service"
+    ],
+    "risk_assessment": {
+      "risk_level": "low",
+      "potential_impact": "Increased memory usage (4GB)",
+      "mitigation": "Reload operation has no downtime"
+    }
+  },
+  {
+    "id": "security-patch-deployment",
+    "title": "Security Patch Deployment",
+    "description": "Apply critical security patches across fleet",
+    "category": "security",
+    "severity": "critical",
+    "estimated_duration": "6m",
+    "success_rate": 89,
+    "execution_count": 23,
+    "last_used": "2025-10-16T08:30:00Z",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Verify Patch Availability",
+        "description": "Check if security patch is available in repositories",
+        "estimated_time": "15s",
+        "command": "apt-cache policy openssl | grep Candidate",
+        "validation": "Target version available"
+      },
+      {
+        "step": 2,
+        "name": "Create System Snapshot",
+        "description": "Snapshot current system state for rollback",
+        "estimated_time": "30s",
+        "command": "lvcreate -L 10G -s -n root-snapshot /dev/vg0/root",
+        "validation": "Snapshot created successfully"
+      },
+      {
+        "step": 3,
+        "name": "Update Package",
+        "description": "Install security patch",
+        "estimated_time": "60s",
+        "command": "apt-get update && apt-get install --only-upgrade openssl -y",
+        "validation": "Package upgraded successfully"
+      },
+      {
+        "step": 4,
+        "name": "Restart Dependent Services",
+        "description": "Restart services using the patched library",
+        "estimated_time": "90s",
+        "command": "systemctl restart nginx postgresql redis",
+        "validation": "All services running"
+      },
+      {
+        "step": 5,
+        "name": "Verify TLS Functionality",
+        "description": "Test TLS connections",
+        "estimated_time": "30s",
+        "command": "openssl s_client -connect localhost:443 -showcerts < /dev/null",
+        "validation": "TLS handshake successful"
+      },
+      {
+        "step": 6,
+        "name": "Run Security Scan",
+        "description": "Verify vulnerability patched",
+        "estimated_time": "45s",
+        "command": "nmap --script ssl-enum-ciphers -p 443 localhost",
+        "validation": "Vulnerable ciphers not present"
+      },
+      {
+        "step": 7,
+        "name": "Monitor Error Rates",
+        "description": "Watch for elevated error rates (2min)",
+        "estimated_time": "120s",
+        "command": "watch -n 10 'tail -100 /var/log/nginx/error.log | grep -c SSL'",
+        "validation": "Error rate within baseline",
+        "success_criteria": "ssl_error_rate < 0.1%"
+      }
+    ],
+    "prerequisites": [
+      "Root access on all servers",
+      "LVM snapshots supported",
+      "Maintenance window scheduled"
+    ],
+    "rollback_steps": [
+      "Restore LVM snapshot: lvconvert --merge /dev/vg0/root-snapshot",
+      "Reboot server to activate snapshot",
+      "Verify services restored"
+    ],
+    "risk_assessment": {
+      "risk_level": "high",
+      "potential_impact": "Service restarts cause brief connection drops, potential incompatibility",
+      "mitigation": "System snapshot enables full rollback, staged rollout recommended"
+    }
+  }
+]
