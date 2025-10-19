@@ -10,10 +10,12 @@ from pathlib import Path
 
 from agents.orchestrator import InfraOrchestrator
 from agents.action_agent import ActionAgent
+from agents.log_ingest_agent import get_log_ingest_agent
 from models.events import WorkflowApprovalRequest
 from services.activity_service import ActivityService
 from services.health_service import HealthDashboardService
 from services.ai_postmortem import PostMortemGenerator
+from services.log_storage_service import get_log_storage
 
 # Initialize FastAPI app
 app = FastAPI(title="InfraAgent API", version="1.0.0")
@@ -40,6 +42,8 @@ action_agent = ActionAgent()
 activity_service = ActivityService()
 health_service = HealthDashboardService()
 postmortem_generator = PostMortemGenerator()
+log_ingest_agent = get_log_ingest_agent()
+log_storage = get_log_storage()
 
 # WebSocket connections
 active_connections: List[WebSocket] = []
@@ -62,6 +66,20 @@ class SimulateAlertRequest(BaseModel):
 class RollbackRequest(BaseModel):
     performed_by: Optional[str] = "demo-user"
     reason: Optional[str] = None
+
+
+class LogIngestRequest(BaseModel):
+    logs: List[dict]  # List of log entries
+
+
+class LogQueryRequest(BaseModel):
+    start_time: Optional[float] = None
+    end_time: Optional[float] = None
+    levels: Optional[List[str]] = None
+    services: Optional[List[str]] = None
+    search: Optional[str] = None
+    limit: int = 100
+    offset: int = 0
 
 
 # WebSocket connection manager
@@ -435,6 +453,107 @@ async def get_runbook(runbook_id: str):
     return runbook.model_dump(mode='json')
 
 
+# ============== LOGS API ==============
+
+@app.post("/api/logs/ingest")
+async def ingest_logs(request: LogIngestRequest):
+    """
+    Ingest logs from external sources
+
+    Accepts JSON-formatted logs in batch
+    """
+    try:
+        count = log_ingest_agent.ingest_json_logs_batch(request.logs)
+
+        # Broadcast new logs event
+        await manager.broadcast({
+            "type": "logs_ingested",
+            "data": {
+                "count": count,
+                "timestamp": asyncio.get_event_loop().time()
+            }
+        })
+
+        return {
+            "status": "success",
+            "count": count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+
+
+@app.post("/api/logs/query")
+async def query_logs(request: LogQueryRequest):
+    """
+    Query logs with filters
+
+    Supports filtering by time range, levels, services, and text search
+    """
+    try:
+        logs = log_storage.query_logs(
+            start_time=request.start_time,
+            end_time=request.end_time,
+            levels=request.levels,
+            services=request.services,
+            search=request.search,
+            limit=request.limit,
+            offset=request.offset
+        )
+
+        total = log_storage.get_log_count(
+            start_time=request.start_time,
+            end_time=request.end_time,
+            levels=request.levels,
+            services=request.services
+        )
+
+        return {
+            "logs": logs,
+            "count": len(logs),
+            "total": total,
+            "offset": request.offset,
+            "limit": request.limit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
+
+
+@app.get("/api/logs/recent")
+async def get_recent_logs(limit: int = 100):
+    """Get most recent logs"""
+    try:
+        logs = log_storage.get_recent_logs(limit=limit)
+        return {
+            "logs": logs,
+            "count": len(logs)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get logs: {str(e)}")
+
+
+@app.get("/api/logs/stats")
+async def get_log_stats(hours: int = 24):
+    """Get log statistics for time window"""
+    try:
+        stats = log_storage.get_log_stats(hours=hours)
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+
+
+@app.get("/api/logs/services")
+async def get_log_services():
+    """Get list of unique services in logs"""
+    try:
+        services = log_storage.get_services()
+        return {
+            "services": services,
+            "count": len(services)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get services: {str(e)}")
+
+
 # ============== HEALTH DASHBOARD API ==============
 
 @app.get("/api/health/dashboard")
@@ -535,6 +654,10 @@ async def root():
             "activities": "/api/activities",
             "rollback": "POST /api/activities/{id}/rollback",
             "runbooks": "/api/runbooks",
+            "logs_ingest": "POST /api/logs/ingest",
+            "logs_query": "POST /api/logs/query",
+            "logs_recent": "/api/logs/recent",
+            "logs_stats": "/api/logs/stats",
             "health_dashboard": "/api/health/dashboard",
             "services": "/api/health/services"
         }

@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import DemoControls from './components/DemoControls'
 import { ToastContainer } from './components/Toast'
+import LogsPage from './LogsPage'
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('dashboard') // dashboard or logs
   const [ws, setWs] = useState(null)
   const [toasts, setToasts] = useState([])
   const [infrastructureHealth, setInfrastructureHealth] = useState({
@@ -454,15 +456,68 @@ function App() {
     }
   }
 
+  // Early return if on Logs page
+  if (currentPage === 'logs') {
+    return (
+      <>
+        {/* Navigation Header */}
+        <header className="bg-slate-900/50 backdrop-blur-sm border-b border-slate-700">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-8">
+                <div>
+                  <h1 className="text-2xl font-bold text-white">InfraAgent</h1>
+                </div>
+                <nav className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage('dashboard')}
+                    className="px-4 py-2 text-slate-400 hover:text-white transition-colors rounded-lg"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage('logs')}
+                    className="px-4 py-2 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-lg font-semibold"
+                  >
+                    🔍 Logs
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </header>
+        <LogsPage />
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+      </>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <header className="bg-slate-900/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white">InfraAgent</h1>
-              <p className="text-slate-400 text-sm">Autonomous Infrastructure Operations</p>
+            <div className="flex items-center gap-8">
+              <div>
+                <h1 className="text-2xl font-bold text-white">InfraAgent</h1>
+                <p className="text-slate-400 text-sm">Autonomous Infrastructure Operations</p>
+              </div>
+              {/* Navigation Tabs */}
+              <nav className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage('dashboard')}
+                  className="px-4 py-2 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-lg font-semibold"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => setCurrentPage('logs')}
+                  className="px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg"
+                >
+                  🔍 Logs
+                </button>
+              </nav>
             </div>
             <div className="flex items-center gap-6">
               <div className="text-right">
