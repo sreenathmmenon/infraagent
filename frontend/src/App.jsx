@@ -77,7 +77,11 @@ function App() {
 
     const connectWebSocket = () => {
       try {
-        websocket = new WebSocket('ws://localhost:8000/ws')
+        // Use production WebSocket URL on Vercel, localhost in development
+        const wsUrl = window.location.hostname === 'localhost'
+          ? 'ws://localhost:8000/ws'
+          : 'wss://infraagent-14zf.onrender.com/ws'
+        websocket = new WebSocket(wsUrl)
 
         websocket.onopen = () => {
           console.log('✅ WebSocket connected')
