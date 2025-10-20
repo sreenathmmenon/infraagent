@@ -6,11 +6,15 @@ from pydantic import BaseModel
 from typing import Optional, List
 import json
 import asyncio
+import os
 from pathlib import Path
 
 from agents.orchestrator import InfraOrchestrator
 from agents.action_agent import ActionAgent
 from agents.log_ingest_agent import get_log_ingest_agent
+from agents.pattern_detection_agent import get_pattern_detection_agent
+from agents.correlation_engine import get_correlation_engine
+from agents.root_cause_analysis_agent import get_root_cause_analysis_agent
 from models.events import WorkflowApprovalRequest
 from services.activity_service import ActivityService
 from services.health_service import HealthDashboardService
@@ -44,6 +48,11 @@ health_service = HealthDashboardService()
 postmortem_generator = PostMortemGenerator()
 log_ingest_agent = get_log_ingest_agent()
 log_storage = get_log_storage()
+
+# Initialize AI agents
+pattern_agent = get_pattern_detection_agent()
+correlation_engine = get_correlation_engine()
+rca_agent = get_root_cause_analysis_agent()
 
 # WebSocket connections
 active_connections: List[WebSocket] = []
@@ -80,6 +89,19 @@ class LogQueryRequest(BaseModel):
     search: Optional[str] = None
     limit: int = 100
     offset: int = 0
+
+
+# AI Request Models
+class AIAnalyzeRequest(BaseModel):
+    start_time: Optional[float] = None
+    end_time: Optional[float] = None
+    services: Optional[List[str]] = None
+    include_remediation: bool = True
+
+
+class NLQueryRequest(BaseModel):
+    query: str
+    hours: int = 1  # Look back window
 
 
 # WebSocket connection manager
@@ -554,6 +576,235 @@ async def get_log_services():
         raise HTTPException(status_code=500, detail=f"Failed to get services: {str(e)}")
 
 
+# ============== AI INTELLIGENCE API ==============
+
+@app.post("/api/ai/analyze")
+async def analyze_logs(request: AIAnalyzeRequest):
+    """
+    AI-powered incident analysis
+    Performs pattern detection, correlation, and root cause analysis
+
+    Perfect for L2/L3 engineers: "What went wrong in the last hour?"
+    """
+    try:
+        # Get logs for time window
+        import time
+        end_time = request.end_time or time.time()
+        start_time = request.start_time or (end_time - 3600)  # Default 1 hour
+
+        logs = log_storage.query_logs(
+            start_time=start_time,
+            end_time=end_time,
+            services=request.services,
+            limit=10000
+        )
+
+        if not logs:
+            return {
+                "status": "no_data",
+                "message": "No logs found for the specified time range"
+            }
+
+        # Step 1: Pattern Detection
+        pattern_analysis = pattern_agent.analyze_logs(logs)
+
+        # Step 2: Anomaly Detection
+        anomalies = pattern_agent.detect_anomalies(logs)
+
+        # Step 3: Correlation (find incidents)
+        incidents = correlation_engine.correlate_incidents(logs)
+
+        # Step 4: Root Cause Analysis (on top incident)
+        root_cause_analysis = None
+        if incidents:
+            top_incident = incidents[0]
+            root_cause_analysis = rca_agent.analyze_incident(
+                top_incident,
+                include_remediation=request.include_remediation
+            )
+
+        return {
+            "status": "success",
+            "time_range": {
+                "start": start_time,
+                "end": end_time,
+                "duration_hours": (end_time - start_time) / 3600
+            },
+            "logs_analyzed": len(logs),
+            "patterns": pattern_analysis,
+            "anomalies": anomalies,
+            "incidents": incidents,
+            "root_cause_analysis": root_cause_analysis
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+@app.post("/api/ai/nl-query")
+async def natural_language_query(request: NLQueryRequest):
+    """
+    Ask questions in natural language
+
+    Examples:
+    - "Why are VMs failing to boot?"
+    - "What caused the authentication errors?"
+    - "Show me database connection issues"
+
+    Returns instant AI-powered answers
+    """
+    try:
+        # Get recent logs
+        import time
+        end_time = time.time()
+        start_time = end_time - (request.hours * 3600)
+
+        logs = log_storage.query_logs(
+            start_time=start_time,
+            end_time=end_time,
+            limit=1000
+        )
+
+        if not logs:
+            return {
+                "status": "no_data",
+                "answer": "No logs found for the specified time range"
+            }
+
+        # Call AI for natural language answer
+        result = rca_agent.answer_natural_language_query(
+            request.query,
+            logs
+        )
+
+        return {
+            "status": "success",
+            "query": request.query,
+            "time_range_hours": request.hours,
+            "logs_analyzed": len(logs),
+            **result
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
+
+
+@app.get("/api/ai/patterns")
+async def get_log_patterns(hours: int = 1):
+    """
+    Get detected log patterns
+
+    Reduces 50K logs to 5-10 unique patterns for easy review
+    """
+    try:
+        import time
+        end_time = time.time()
+        start_time = end_time - (hours * 3600)
+
+        logs = log_storage.query_logs(
+            start_time=start_time,
+            end_time=end_time,
+            limit=50000
+        )
+
+        if not logs:
+            return {
+                "status": "no_data",
+                "patterns": []
+            }
+
+        analysis = pattern_agent.analyze_logs(logs)
+
+        return {
+            "status": "success",
+            "time_range_hours": hours,
+            **analysis
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Pattern detection failed: {str(e)}")
+
+
+@app.post("/api/ai/correlate")
+async def correlate_logs(request: AIAnalyzeRequest):
+    """
+    Find correlated incidents across services
+
+    Links failures: Keystone auth → Nova compute → Neutron network
+    """
+    try:
+        import time
+        end_time = request.end_time or time.time()
+        start_time = request.start_time or (end_time - 3600)
+
+        logs = log_storage.query_logs(
+            start_time=start_time,
+            end_time=end_time,
+            services=request.services,
+            limit=10000
+        )
+
+        if not logs:
+            return {
+                "status": "no_data",
+                "incidents": []
+            }
+
+        incidents = correlation_engine.correlate_incidents(logs)
+
+        return {
+            "status": "success",
+            "time_range": {
+                "start": start_time,
+                "end": end_time
+            },
+            "logs_analyzed": len(logs),
+            "incidents_found": len(incidents),
+            "incidents": incidents
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Correlation failed: {str(e)}")
+
+
+@app.get("/api/ai/anomalies")
+async def detect_anomalies(hours: int = 24):
+    """
+    Detect anomalous patterns (error rate spikes)
+
+    Finds unusual behavior compared to baseline
+    """
+    try:
+        import time
+        end_time = time.time()
+        start_time = end_time - (hours * 3600)
+
+        logs = log_storage.query_logs(
+            start_time=start_time,
+            end_time=end_time,
+            limit=50000
+        )
+
+        if not logs:
+            return {
+                "status": "no_data",
+                "anomalies": []
+            }
+
+        anomalies = pattern_agent.detect_anomalies(logs, baseline_hours=hours)
+
+        return {
+            "status": "success",
+            "time_range_hours": hours,
+            "logs_analyzed": len(logs),
+            "anomalies_found": len(anomalies),
+            "anomalies": anomalies
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Anomaly detection failed: {str(e)}")
+
+
 # ============== HEALTH DASHBOARD API ==============
 
 @app.get("/api/health/dashboard")
@@ -636,13 +887,27 @@ async def generate_postmortem(activity_id: str):
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
 
 
+# Debug endpoint - check AI status
+@app.get("/api/ai/status")
+async def ai_status():
+    """Check if Claude AI is properly initialized"""
+    has_api_key = bool(os.getenv('ANTHROPIC_API_KEY'))
+    has_client = rca_agent.client is not None
+
+    return {
+        "api_key_set": has_api_key,
+        "claude_client_initialized": has_client,
+        "status": "Real Claude AI" if has_client else "Mock AI (no API key)"
+    }
+
+
 # Root endpoint
 @app.get("/")
 async def root():
     return {
         "service": "InfraAgent",
-        "version": "1.0.0",
-        "description": "Autonomous Infrastructure Operations with Human-in-the-Loop",
+        "version": "2.0.0",
+        "description": "AI-Powered Infrastructure Operations with Intelligent Log Analysis",
         "endpoints": {
             "health": "/health",
             "websocket": "/ws",
@@ -658,6 +923,11 @@ async def root():
             "logs_query": "POST /api/logs/query",
             "logs_recent": "/api/logs/recent",
             "logs_stats": "/api/logs/stats",
+            "ai_analyze": "POST /api/ai/analyze - Full AI incident analysis",
+            "ai_nl_query": "POST /api/ai/nl-query - Ask questions in natural language",
+            "ai_patterns": "GET /api/ai/patterns - Detect log patterns",
+            "ai_correlate": "POST /api/ai/correlate - Find correlated incidents",
+            "ai_anomalies": "GET /api/ai/anomalies - Detect anomalous behavior",
             "health_dashboard": "/api/health/dashboard",
             "services": "/api/health/services"
         }

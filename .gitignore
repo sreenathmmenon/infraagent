@@ -23,3 +23,11 @@ dist/
 
 # Logs
 *.log
+
+# Internal documentation
+.llmswap/
+
+# Database files
+backend/logs.db
+backend/data/
+

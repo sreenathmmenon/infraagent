@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import DemoControls from './components/DemoControls'
 import { ToastContainer } from './components/Toast'
 import LogsPage from './LogsPage'
+import AIAnalyzerPage from './AIAnalyzerPage'
+import PostMortemModal from './components/PostMortemModal'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard') // dashboard or logs
@@ -26,6 +28,9 @@ function App() {
   const [rollbackProgress, setRollbackProgress] = useState(null)
   const [rollbackStep, setRollbackStep] = useState(0)
   const rollbackProgressRef = useRef(null)
+
+  // Post-mortem modal state
+  const [postmortemActivity, setPostmortemActivity] = useState(null)
 
   // Runbooks
   const [runbooks, setRunbooks] = useState([])
@@ -456,10 +461,52 @@ function App() {
     }
   }
 
+  // Early return if on AI Analyzer page
+  if (currentPage === 'ai') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        {/* Navigation Header */}
+        <header className="bg-slate-900/50 backdrop-blur-sm border-b border-slate-700">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-8">
+                <div>
+                  <h1 className="text-2xl font-bold text-white">InfraAgent</h1>
+                </div>
+                <nav className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage('dashboard')}
+                    className="px-4 py-2 text-slate-400 hover:text-white transition-colors rounded-lg"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage('logs')}
+                    className="px-4 py-2 text-slate-400 hover:text-white transition-colors rounded-lg"
+                  >
+                    Logs
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage('ai')}
+                    className="px-4 py-2 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-lg font-semibold"
+                  >
+                    AI Analyzer
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </header>
+        <AIAnalyzerPage />
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+      </div>
+    )
+  }
+
   // Early return if on Logs page
   if (currentPage === 'logs') {
     return (
-      <>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         {/* Navigation Header */}
         <header className="bg-slate-900/50 backdrop-blur-sm border-b border-slate-700">
           <div className="max-w-7xl mx-auto px-6 py-4">
@@ -479,7 +526,13 @@ function App() {
                     onClick={() => setCurrentPage('logs')}
                     className="px-4 py-2 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-lg font-semibold"
                   >
-                    🔍 Logs
+                    Logs
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage('ai')}
+                    className="px-4 py-2 text-slate-400 hover:text-white transition-colors rounded-lg"
+                  >
+                    AI Analyzer
                   </button>
                 </nav>
               </div>
@@ -488,7 +541,7 @@ function App() {
         </header>
         <LogsPage />
         <ToastContainer toasts={toasts} removeToast={removeToast} />
-      </>
+      </div>
     )
   }
 
@@ -515,7 +568,13 @@ function App() {
                   onClick={() => setCurrentPage('logs')}
                   className="px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg"
                 >
-                  🔍 Logs
+                  Logs
+                </button>
+                <button
+                  onClick={() => setCurrentPage('ai')}
+                  className="px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg"
+                >
+                  AI Analyzer
                 </button>
               </nav>
             </div>
@@ -915,6 +974,19 @@ function App() {
                         <div className="text-xs text-slate-500">
                           {new Date(activity.timestamp).toLocaleTimeString()} • {activity.changes_made?.length || 0} changes
                         </div>
+
+                        {/* AI Post-Mortem Button */}
+                        {activity.status === 'completed' && (
+                          <button
+                            onClick={() => setPostmortemActivity(activity)}
+                            className="mt-3 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-sm font-medium rounded-lg transition-all flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Generate AI Post-Mortem
+                          </button>
+                        )}
                       </div>
 
                       {isRollbackAvailable && (
@@ -1147,6 +1219,14 @@ function App() {
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      {/* AI Post-Mortem Modal */}
+      {postmortemActivity && (
+        <PostMortemModal
+          activity={postmortemActivity}
+          onClose={() => setPostmortemActivity(null)}
+        />
+      )}
     </div>
   )
 }
