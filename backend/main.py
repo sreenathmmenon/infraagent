@@ -58,6 +58,102 @@ rca_agent = get_root_cause_analysis_agent()
 active_connections: List[WebSocket] = []
 
 
+# Startup: Auto-generate sample data if database is empty
+@app.on_event("startup")
+async def startup_event():
+    """Generate sample data on startup if database is empty"""
+    try:
+        # Check if database has any logs
+        stats = log_storage.get_stats()
+
+        if stats['total'] == 0:
+            print("\n" + "="*80)
+            print("📊 DATABASE IS EMPTY - GENERATING SAMPLE DATA FOR DEMO")
+            print("="*80)
+
+            # Generate sample OpenStack cascading failure logs
+            import time
+            import uuid
+            from datetime import datetime
+
+            sample_logs = []
+            base_time = time.time() - 3600  # 1 hour ago
+            request_id = f"req-{uuid.uuid4()}"
+            instance_uuid = str(uuid.uuid4())
+
+            # Phase 1: Database issues
+            for i in range(10):
+                sample_logs.append({
+                    'timestamp': datetime.fromtimestamp(base_time + i).isoformat(),
+                    'level': 'WARN',
+                    'service': 'mysql-server',
+                    'host': 'db-01',
+                    'message': f'Connection pool at 95% capacity: {475 + i*2}/500 connections active'
+                })
+
+            sample_logs.append({
+                'timestamp': datetime.fromtimestamp(base_time + 30).isoformat(),
+                'level': 'ERROR',
+                'service': 'mysql-server',
+                'host': 'db-01',
+                'message': 'Connection pool exhausted: max_connections=500 reached'
+            })
+
+            # Phase 2: Keystone failures
+            for i in range(5):
+                sample_logs.append({
+                    'timestamp': datetime.fromtimestamp(base_time + 35 + i*5).isoformat(),
+                    'level': 'ERROR',
+                    'service': 'keystone-api',
+                    'host': 'auth-01',
+                    'message': f'Database connection timeout after 30s. Cannot verify token'
+                })
+
+            # Phase 3: Nova failures
+            for i in range(8):
+                vm_id = f"vm-{uuid.uuid4().hex[:8]}"
+                sample_logs.append({
+                    'timestamp': datetime.fromtimestamp(base_time + 70 + i*10).isoformat(),
+                    'level': 'ERROR',
+                    'service': 'nova-compute',
+                    'host': f'compute-{i%3 + 1:02d}',
+                    'message': f'VM boot failed for {vm_id}. Networking setup failed'
+                })
+
+            # Phase 4: Recovery
+            sample_logs.append({
+                'timestamp': datetime.fromtimestamp(base_time + 200).isoformat(),
+                'level': 'INFO',
+                'service': 'mysql-server',
+                'host': 'db-01',
+                'message': 'Connection pool back to normal: 120/500 connections'
+            })
+
+            # Add normal operational logs
+            for i in range(40):
+                sample_logs.append({
+                    'timestamp': datetime.fromtimestamp(base_time + 250 + i*10).isoformat(),
+                    'level': 'INFO',
+                    'service': ['nova-api', 'neutron-server', 'glance-api', 'keystone-admin'][i % 4],
+                    'host': f'controller-{i%2 + 1:02d}',
+                    'message': 'Metrics collected and sent to monitoring'
+                })
+
+            # Ingest all sample logs
+            log_ingest_agent.ingest_logs(sample_logs)
+
+            print(f"✅ Generated {len(sample_logs)} sample logs")
+            print(f"   - Database exhaustion scenario")
+            print(f"   - VM boot failures")
+            print(f"   - Recovery phase")
+            print("="*80 + "\n")
+        else:
+            print(f"\n✅ Database already has {stats['total']} logs - skipping sample data generation\n")
+
+    except Exception as e:
+        print(f"\n⚠️  Error generating sample data: {e}\n")
+
+
 # Request/Response models
 class ApproveRequest(BaseModel):
     approved_by: Optional[str] = "demo-user"
