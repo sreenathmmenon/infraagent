@@ -64,7 +64,7 @@ async def startup_event():
     """Generate sample data on startup if database is empty"""
     try:
         # Check if database has any logs
-        stats = log_storage.get_stats()
+        stats = log_storage.get_log_stats()
 
         if stats['total'] == 0:
             print("\n" + "="*80)
@@ -664,7 +664,7 @@ async def load_sample_data():
     """Manually load sample data for demo purposes"""
     try:
         # Check if database already has data
-        stats = log_storage.get_stats()
+        stats = log_storage.get_log_stats()
 
         if stats['total'] > 0:
             return {
