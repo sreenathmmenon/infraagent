@@ -140,7 +140,7 @@ async def startup_event():
                 })
 
             # Ingest all sample logs
-            log_ingest_agent.ingest_logs(sample_logs)
+            log_ingest_agent.ingest_json_logs_batch(sample_logs)
 
             print(f"✅ Generated {len(sample_logs)} sample logs")
             print(f"   - Database exhaustion scenario")
@@ -740,7 +740,7 @@ async def load_sample_data():
             })
 
         # Ingest all sample logs
-        log_ingest_agent.ingest_logs(sample_logs)
+        log_ingest_agent.ingest_json_logs_batch(sample_logs)
 
         return {
             "status": "success",
