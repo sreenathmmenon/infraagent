@@ -659,6 +659,100 @@ async def get_log_stats(hours: int = 24):
         raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
 
 
+@app.post("/api/logs/load-sample-data")
+async def load_sample_data():
+    """Manually load sample data for demo purposes"""
+    try:
+        # Check if database already has data
+        stats = log_storage.get_stats()
+
+        if stats['total'] > 0:
+            return {
+                "status": "skipped",
+                "message": f"Database already has {stats['total']} logs",
+                "total": stats['total']
+            }
+
+        # Generate sample logs
+        import time
+        import uuid
+        from datetime import datetime
+
+        sample_logs = []
+        base_time = time.time() - 3600  # 1 hour ago
+
+        # Phase 1: Database issues
+        for i in range(10):
+            sample_logs.append({
+                'timestamp': datetime.fromtimestamp(base_time + i).isoformat(),
+                'level': 'WARN',
+                'service': 'mysql-server',
+                'host': 'db-01',
+                'message': f'Connection pool at 95% capacity: {475 + i*2}/500 connections active'
+            })
+
+        sample_logs.append({
+            'timestamp': datetime.fromtimestamp(base_time + 30).isoformat(),
+            'level': 'ERROR',
+            'service': 'mysql-server',
+            'host': 'db-01',
+            'message': 'Connection pool exhausted: max_connections=500 reached'
+        })
+
+        # Phase 2: Keystone failures
+        for i in range(5):
+            sample_logs.append({
+                'timestamp': datetime.fromtimestamp(base_time + 35 + i*5).isoformat(),
+                'level': 'ERROR',
+                'service': 'keystone-api',
+                'host': 'auth-01',
+                'message': f'Database connection timeout after 30s. Cannot verify token'
+            })
+
+        # Phase 3: Nova failures
+        for i in range(8):
+            vm_id = f"vm-{uuid.uuid4().hex[:8]}"
+            sample_logs.append({
+                'timestamp': datetime.fromtimestamp(base_time + 70 + i*10).isoformat(),
+                'level': 'ERROR',
+                'service': 'nova-compute',
+                'host': f'compute-{i%3 + 1:02d}',
+                'message': f'VM boot failed for {vm_id}. Networking setup failed'
+            })
+
+        # Phase 4: Recovery
+        sample_logs.append({
+            'timestamp': datetime.fromtimestamp(base_time + 200).isoformat(),
+            'level': 'INFO',
+            'service': 'mysql-server',
+            'host': 'db-01',
+            'message': 'Connection pool back to normal: 120/500 connections'
+        })
+
+        # Add normal operational logs
+        for i in range(40):
+            sample_logs.append({
+                'timestamp': datetime.fromtimestamp(base_time + 250 + i*10).isoformat(),
+                'level': 'INFO',
+                'service': ['nova-api', 'neutron-server', 'glance-api', 'keystone-admin'][i % 4],
+                'host': f'controller-{i%2 + 1:02d}',
+                'message': 'Metrics collected and sent to monitoring'
+            })
+
+        # Ingest all sample logs
+        log_ingest_agent.ingest_logs(sample_logs)
+
+        return {
+            "status": "success",
+            "message": "Sample data loaded successfully",
+            "total": len(sample_logs),
+            "scenarios": ["Database exhaustion", "VM boot failures", "Recovery phase"]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load sample data: {str(e)}")
+
+
 @app.get("/api/logs/services")
 async def get_log_services():
     """Get list of unique services in logs"""
